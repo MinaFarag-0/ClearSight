@@ -1,0 +1,15 @@
+﻿namespace ClearSight.Core.Mosels
+{
+    public class PatientHistory
+    {
+        public int Id { get; set; }
+        public string PatientName { get; set; }
+        public string? FundusCameraResult { get; set; }
+        public string? PatientId { get; set; }
+        public Patient? Patient { get; set; }
+        public string? DoctorId { get; set; }
+        public Doctor? Doctor { get; set; }
+        public DateTime Date { get; set; } = DateTime.Now;
+        public string FundusCameraPath { get; set; }
+    }
+}
