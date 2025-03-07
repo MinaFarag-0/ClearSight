@@ -2,7 +2,7 @@
 {
     public class ApiSuccessResponse
     {
-        public int StatusCode { get; set; }
+        public int StatusCode { get; set; } = 200; 
         public string result { get; set; }
     }
 }

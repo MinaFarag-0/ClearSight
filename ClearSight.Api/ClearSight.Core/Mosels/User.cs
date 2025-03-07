@@ -4,7 +4,7 @@ namespace ClearSight.Core.Mosels
 {
     public class User : IdentityUser
     {
-        public string DisplayName { get; set; }
+        public string FullName { get; set; }
         public string ProfileImagePath { get; set; }
         public ICollection<UserCode> UserCodes { get; set; } = [];
         public List<RefreshToken>? RefreshTokens { get; set; } = [];

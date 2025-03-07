@@ -2,7 +2,7 @@
 {
     public class ApiErrorResponse
     {
-        public int StatusCode { get; set; }
-        public string err_message { get; set; }
+        public int StatusCode { get; set; } = 400;
+        public string err_message { get; set; } = "error happen";
     }
 }

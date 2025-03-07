@@ -33,7 +33,6 @@ namespace ClearSight.Infrastructure.Context
                     .WithOne(x => x.Patient)
                     .HasForeignKey(x => x.PatientId)
                     .OnDelete(DeleteBehavior.NoAction);
-
             }
         }
         public class DoctorConfigrations : IEntityTypeConfiguration<Doctor>
@@ -51,8 +50,6 @@ namespace ClearSight.Infrastructure.Context
                    .WithOne(x => x.Doctor)
                    .HasForeignKey(x => x.DoctorId)
                    .OnDelete(DeleteBehavior.NoAction);
-
-
             }
         }
 
@@ -64,8 +61,6 @@ namespace ClearSight.Infrastructure.Context
 
             }
         }
-
-
         public class UserCodeConfigrations : IEntityTypeConfiguration<UserCode>
         {
             public void Configure(EntityTypeBuilder<UserCode> builder)
@@ -74,7 +69,6 @@ namespace ClearSight.Infrastructure.Context
                     .WithMany(x => x.UserCodes)
                     .HasForeignKey(x => x.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
-
             }
         }
         public class UserPhoneNumberConfigrations : IEntityTypeConfiguration<UserPhoneNumber>

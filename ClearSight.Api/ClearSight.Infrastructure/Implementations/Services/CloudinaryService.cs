@@ -1,4 +1,5 @@
-﻿using ClearSight.Core.Helpers;
+﻿using ClearSight.Core.Enums;
+using ClearSight.Core.Helpers;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http;
@@ -23,14 +24,14 @@ namespace ClearSight.Infrastructure.Implementations.Services
             _cloudinary = new Cloudinary(account);
         }
 
-        public async Task<string> UploadImageAsync(IFormFile file, string folder)
+        public async Task<string> UploadImageAsync(IFormFile file,CloudFolder folder)
         {
             using var stream = file.OpenReadStream();
             var uploadParams = new ImageUploadParams()
             {
-                //AllowedFormats = ["jpg","png"],
-                Folder = folder,
-                File = new FileDescription(file.FileName, stream),
+                AllowedFormats = ["jpg","png","jpeg"],
+                Folder = folder.ToString(),
+                File = new FileDescription(Guid.NewGuid().ToString(), stream),
             };
             var uploadResult = await _cloudinary.UploadAsync(uploadParams);
             return uploadResult.Url.ToString();

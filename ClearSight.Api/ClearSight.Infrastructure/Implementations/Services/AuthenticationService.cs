@@ -47,7 +47,7 @@ namespace ClearSight.Infrastructure.Implementations.Services
 
             var user = new User
             {
-                DisplayName =model.FullName,
+                FullName =model.FullName,
                 UserName = UserName,
                 Email = model.Email,
                 ProfileImagePath = "http://res.cloudinary.com/dxpkckl5t/image/upload/v1737133446/temp/crhf7yb1o7bl71har1bb.png"

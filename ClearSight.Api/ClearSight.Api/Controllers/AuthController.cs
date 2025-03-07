@@ -9,10 +9,13 @@ using ClearSight.Core.Dtos.AuthenticationDtos;
 using ClearSight.Core.Constant;
 using Microsoft.EntityFrameworkCore;
 using ClearSight.Core.Dtos.ApiResponse;
-using Microsoft.AspNetCore.Http;
+using Serilog;
 
 namespace ClearSight.Api.Controllers
 {
+    /// <summary>
+    /// Authentication Controller For Login , Register ,Reset Password and more
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json")]
@@ -64,11 +67,11 @@ namespace ClearSight.Api.Controllers
         /// <returns>Returns success message or validation errors.</returns>
         /// <response code="200">User registered successfully</response>
         /// <response code="400">Validation error</response>
-        /// <response code="404">User NotFound error</response>
+        /// <response code="400">User NotFound error</response>
         /// <response code="500">Internal server error</response>
         [ProducesResponseType(typeof(ApiSuccessResponse), 200)]
         [ProducesResponseType(typeof(ModelStateErrorResponse), 400)]
-        [ProducesResponseType(typeof(ApiErrorResponse), 404)]
+        [ProducesResponseType(typeof(ApiErrorResponse), 400)]
         [ProducesResponseType(typeof(ServerErrorResponse), 500)]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromForm] RegisterModel model)
@@ -81,7 +84,7 @@ namespace ClearSight.Api.Controllers
             var user = await _userManager.FindByEmailAsync(model.Email);
 
             if (user == null)
-                return NotFound(new ApiErrorResponse { err_message = "Email Not Found" });
+                return BadRequest(new ApiErrorResponse { err_message = "Email Not Found" });
 
             var token = await _authenticationService.GenerateEmailConfirmationTokenAsync(user.Id);
 
@@ -92,7 +95,7 @@ namespace ClearSight.Api.Controllers
             str.Close();
 
             mailText = mailText.Replace("RESET_LINK", confirmationLink);
-            mailText = mailText.Replace("PATIENT_NAME", user.DisplayName);
+            mailText = mailText.Replace("PATIENT_NAME", user.FullName);
 
             try
             {
@@ -100,6 +103,7 @@ namespace ClearSight.Api.Controllers
             }
             catch (Exception ex)
             {
+                Log.Error(ex, "Login Error");
                 await _userManager.DeleteAsync(user);
                 return BadRequest(new ServerErrorResponse { StatusCode =500, err_message = ex.Message });
             }
@@ -113,22 +117,22 @@ namespace ClearSight.Api.Controllers
         /// <returns>Returns success message or validation errors.</returns>
         /// <response code="200">User logined successfully</response>
         /// <response code="400">Validation error</response>
+        /// <response code="400">User NotFound error</response>
         /// <response code="401">UnAuthorized User error</response>
-        /// <response code="404">User NotFound error</response>
         [ProducesResponseType(typeof(AuthenticationModel), 200)]
         [ProducesResponseType(typeof(ModelStateErrorResponse), 400)]
+        [ProducesResponseType(typeof(ApiErrorResponse), 400)]
         [ProducesResponseType(typeof(ApiErrorResponse), 401)]
-        [ProducesResponseType(typeof(ApiErrorResponse), 404)]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromForm] LoginModel model)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
 
             if (user == null)
-                return NotFound(new ApiErrorResponse { err_message = "Email Not Registerd" });
+                return BadRequest(new ApiErrorResponse { err_message = "Email Not Registerd" });
 
             if (await _userManager.IsLockedOutAsync(user))
-                return Unauthorized(new ApiErrorResponse { err_message = "Your account is locked. Please try again later." });
+                return BadRequest(new ApiErrorResponse { err_message = "Your account is locked. Please try again later." });
 
 
             if (!user.EmailConfirmed)
@@ -249,7 +253,7 @@ namespace ClearSight.Api.Controllers
             var mailText = str.ReadToEnd();
             str.Close();
 
-            mailText = mailText.Replace("USER_NAME", user.DisplayName);
+            mailText = mailText.Replace("USER_NAME", user.FullName);
             mailText = mailText.Replace("{CODE}", code);
 
             await _emailSender.SendEmailAsync(user.Email, "Code", mailText);
@@ -298,6 +302,14 @@ namespace ClearSight.Api.Controllers
             return Ok(new ApiSuccessResponse{ result = "Password reset successful." });
         }
 
+        /// <summary>
+        /// Call this api to get new token if your refresh token still valid
+        /// </summary>
+        /// <returns>Returns  refresh token or validation errors.</returns>
+        /// <response code="200">Returns refresh token successfully</response>
+        /// <response code="400">Invalid refresh token login again</response>
+        [ProducesResponseType(typeof(AuthenticationModel), 200)]
+        [ProducesResponseType(typeof(AuthenticationModel), 404)]
         [HttpGet("refreshToken")]
         public async Task<IActionResult> RefreshToken()
         {
@@ -313,21 +325,41 @@ namespace ClearSight.Api.Controllers
             
             return Ok(result);
         }
-
+        /// <summary>
+        /// Call this api to revoke your refresh token 
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns>Returns  success or validation errors.</returns>
+        /// <response code="200">Token Revoked Successfully</response>
+        /// <response code="400">Invalid refresh token login again</response>
+        [ProducesResponseType(typeof(ApiSuccessResponse), 200)]
+        [ProducesResponseType(typeof(ApiErrorResponse), 400)]
         [HttpPost("revokeToken")]
         public async Task<IActionResult> RevokeToken([FromBody] RevokeToken model)
         {
             var token = model.Token ?? Request.Cookies["refreshToken"];
 
             if (string.IsNullOrEmpty(token))
-                return BadRequest("Token is required!");
+                return BadRequest(new ApiErrorResponse
+                {
+                    StatusCode =StatusCodes.Status400BadRequest,
+                    err_message = "Token is required!"
+                });
 
             var result = await _authenticationService.RevokeTokenAsync(token);
 
             if (!result)
-                return BadRequest("Token is invalid!");
+                return BadRequest(new ApiErrorResponse
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    err_message = "Token is invalid!"
+                });
 
-            return Ok();
+            return Ok(new ApiSuccessResponse
+            {
+                StatusCode =StatusCodes.Status200OK,
+                result ="Token Revoked Successfully"
+            });
         }
 
         

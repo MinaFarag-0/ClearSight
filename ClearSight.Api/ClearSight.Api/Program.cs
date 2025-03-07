@@ -2,6 +2,7 @@ using ClearSight.Core.Dtos.ApiResponse;
 using ClearSight.Core.Helpers;
 using ClearSight.Core.Mosels;
 using ClearSight.Infrastructure.Context;
+using ClearSight.Infrastructure.Implementations.Middlewares;
 using ClearSight.Infrastructure.Implementations.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -10,16 +11,29 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration) 
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+
+builder.Host.UseSerilog();
+
 builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<MLModelService>();
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 builder.Services.AddControllers()
+    .AddXmlSerializerFormatters()
     .ConfigureApiBehaviorOptions(options =>
     {
         options.InvalidModelStateResponseFactory = context =>
@@ -86,13 +100,24 @@ builder.Services.AddRateLimiter(options =>
             partitionKey: httpContext.Request.Headers.Host.ToString(),
             factory: _ => new FixedWindowRateLimiterOptions
             {
-
                 PermitLimit = 15,
                 Window = TimeSpan.FromMinutes(1),
-                QueueLimit = 0
+                QueueLimit = 0,
             });
     });
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        context.HttpContext.Response.ContentType = "application/json";
+
+        var response = new ApiErrorResponse
+        {
+            StatusCode = 429,
+            err_message = "Too many requests. Please try again later."
+        };
+
+        await context.HttpContext.Response.WriteAsync(JsonSerializer.Serialize(response), cancellationToken);
+    };
 });
 #endregion
 
@@ -120,6 +145,21 @@ builder.Services.AddAuthentication(options =>
         };
         o.Events = new JwtBearerEvents
         {
+            OnChallenge = context =>
+            {
+                if (!context.Response.HasStarted)
+                {
+                    var response = new ApiErrorResponse
+                    {
+                        StatusCode = 401,
+                        err_message = "Unauthorized: Please provide a valid token."
+                    };
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.ContentType = "application/json";
+                    return context.Response.WriteAsync(JsonSerializer.Serialize(response));
+                }
+                return Task.CompletedTask;
+            },
             OnTokenValidated = async context =>
             {
                 var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<User>>();
@@ -134,14 +174,29 @@ builder.Services.AddAuthentication(options =>
                         var currentSecurityStamp = await userManager.GetSecurityStampAsync(user);
                         if (currentSecurityStamp != securityStamp)
                         {
-                            // Security Stamp has changed, invalidate the token
                             context.Fail("Token expired. Please log in again.");
                         }
                     }
                 }
+            },
+            OnForbidden = context =>
+            {
+                var response = new ApiErrorResponse
+                {
+                    StatusCode = 403,
+                    err_message = "You do not have permission to access this resource."
+                };
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsync(JsonSerializer.Serialize(response));
             }
         };
 
+    })
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
     })
     .AddCookie()
 ; 
@@ -191,12 +246,19 @@ await SeedingRoles.Initialize(scope.ServiceProvider);
 app.UseSwagger();
 app.UseSwaggerUI();
 
+
+app.UseSerilogRequestLogging();
+
 app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 app.UseRouting();
 app.UseStatusCodePages();
+app.UseStaticFiles();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
 app.UseRateLimiter();
 app.MapControllers();
 app.Run();
