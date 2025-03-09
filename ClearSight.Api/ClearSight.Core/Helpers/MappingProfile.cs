@@ -29,6 +29,7 @@ namespace ClearSight.Core.Helpers
                 .ForMember(m => m.PhoneNumbers, s => s.MapFrom(s => s.User.PhoneNumbers.Select(p => p.PhoneNumber).ToList()))
                 .ForMember(m => m.Email, s => s.MapFrom(s => s.User.Email));
             CreateMap<PatientHistory, PatientHistoryDto>()
+                .ForMember(m => m.Date, s => s.MapFrom(s => s.Date.ToLocalTime()))
                 .ForMember(m => m.DoctorName, s => s.MapFrom(s => s.Doctor.User.FullName));
         }
     }

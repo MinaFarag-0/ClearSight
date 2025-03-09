@@ -67,11 +67,9 @@ namespace ClearSight.Api.Controllers
         /// <returns>Returns success message or validation errors.</returns>
         /// <response code="200">User registered successfully</response>
         /// <response code="400">Validation error</response>
-        /// <response code="400">User NotFound error</response>
         /// <response code="500">Internal server error</response>
         [ProducesResponseType(typeof(ApiSuccessResponse), 200)]
         [ProducesResponseType(typeof(ModelStateErrorResponse), 400)]
-        [ProducesResponseType(typeof(ApiErrorResponse), 400)]
         [ProducesResponseType(typeof(ServerErrorResponse), 500)]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromForm] RegisterModel model)
@@ -117,11 +115,9 @@ namespace ClearSight.Api.Controllers
         /// <returns>Returns success message or validation errors.</returns>
         /// <response code="200">User logined successfully</response>
         /// <response code="400">Validation error</response>
-        /// <response code="400">User NotFound error</response>
         /// <response code="401">UnAuthorized User error</response>
         [ProducesResponseType(typeof(AuthenticationModel), 200)]
         [ProducesResponseType(typeof(ModelStateErrorResponse), 400)]
-        [ProducesResponseType(typeof(ApiErrorResponse), 400)]
         [ProducesResponseType(typeof(ApiErrorResponse), 401)]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromForm] LoginModel model)
@@ -161,10 +157,10 @@ namespace ClearSight.Api.Controllers
         /// <returns>Returns success message or validation errors.</returns>
         /// <response code="200">Change Password successfully</response>
         /// <response code="400">Validation error</response>
-        /// <response code="404">User not found.</response>
+        /// <response code="400">User not found.</response>
         [ProducesResponseType(typeof(ApiSuccessResponse), 200)]
         [ProducesResponseType(typeof(ModelStateErrorResponse), 400)]
-        [ProducesResponseType(typeof(IEnumerable<IdentityError>), 404)]
+        [ProducesResponseType(typeof(IEnumerable<IdentityError>), 400)]
         [Authorize]
         [HttpPost("ChangePassword")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model)
@@ -221,15 +217,16 @@ namespace ClearSight.Api.Controllers
             }
             return BadRequest("Error confirming your email.");
         }
+        
         /// <summary>
         /// Get Change Password Code.
         /// </summary>
         /// <param name="email">User Mail To Get Verivication Code.</param>
         /// <returns>Returns success message or validation errors.</returns>
         /// <response code="200">Code Send To Your Mail successfully</response>
-        /// <response code="404">Email not found error</response>
+        /// <response code="400">Email not found error</response>
         [ProducesResponseType(typeof(ApiSuccessResponse), 200)]
-        [ProducesResponseType(typeof(ApiErrorResponse), 404)]
+        [ProducesResponseType(typeof(ApiErrorResponse), 400)]
         [HttpGet("GetCode")]
         public async Task<IActionResult> GetCode(string email)
         {
@@ -259,6 +256,7 @@ namespace ClearSight.Api.Controllers
             await _emailSender.SendEmailAsync(user.Email, "Code", mailText);
             return Ok(new ApiSuccessResponse{ result = "Verification code sent to your email." });
         }
+
         /// <summary>
         /// Reset User Password.
         /// </summary>
@@ -266,10 +264,9 @@ namespace ClearSight.Api.Controllers
         /// <returns>Returns success message or validation errors.</returns>
         /// <response code="200">Reset Password successfully</response>
         /// <response code="400">Invalid or expired verification code.</response>
-        /// <response code="404">User not found.</response>
+        /// <response code="400">User not found.</response>
         [ProducesResponseType(typeof(ApiSuccessResponse), 200)]
         [ProducesResponseType(typeof(ApiErrorResponse), 400)]
-        [ProducesResponseType(typeof(ApiErrorResponse), 404)]
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
         {
@@ -288,7 +285,7 @@ namespace ClearSight.Api.Controllers
             // Update the user's password
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == resetPasswordDto.Email);
             if (user == null)
-                return NotFound(new ApiErrorResponse { err_message = "User not found." });
+                return BadRequest(new ApiErrorResponse { err_message = "User not found." });
 
 
             user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, resetPasswordDto.NewPassword);
@@ -307,9 +304,9 @@ namespace ClearSight.Api.Controllers
         /// </summary>
         /// <returns>Returns  refresh token or validation errors.</returns>
         /// <response code="200">Returns refresh token successfully</response>
-        /// <response code="400">Invalid refresh token login again</response>
+        /// <response code="400">Invalid refresh token, login again</response>
         [ProducesResponseType(typeof(AuthenticationModel), 200)]
-        [ProducesResponseType(typeof(AuthenticationModel), 404)]
+        [ProducesResponseType(typeof(AuthenticationModel), 400)]
         [HttpGet("refreshToken")]
         public async Task<IActionResult> RefreshToken()
         {
@@ -334,10 +331,10 @@ namespace ClearSight.Api.Controllers
         /// <response code="400">Invalid refresh token login again</response>
         [ProducesResponseType(typeof(ApiSuccessResponse), 200)]
         [ProducesResponseType(typeof(ApiErrorResponse), 400)]
-        [HttpPost("revokeToken")]
-        public async Task<IActionResult> RevokeToken([FromBody] RevokeToken model)
+        [HttpDelete("revokeToken")]
+        public async Task<IActionResult> RevokeToken()
         {
-            var token = model.Token ?? Request.Cookies["refreshToken"];
+            var token = Request.Cookies["refreshToken"];
 
             if (string.IsNullOrEmpty(token))
                 return BadRequest(new ApiErrorResponse
