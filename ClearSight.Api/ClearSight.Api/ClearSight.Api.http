@@ -1,6 +1,11 @@
-@ClearSight.Api_HostAddress = http://localhost:5275
+@ClearSight.Api_HostAddress = https://localhost:44351
 
 GET {{ClearSight.Api_HostAddress}}/weatherforecast/
 Accept: application/json
+
+###
+
+@userName=string
+POST {{ClearSight.Api_HostAddress}}/api/auth/generateUserName?userName={{userName}}
 
 ###

@@ -1,17 +1,12 @@
-﻿using AutoMapper;
-using ClearSight.Core.Dtos.ApiResponse;
+﻿using ClearSight.Core.Dtos.ApiResponse;
 using ClearSight.Core.Dtos.BusnessDtos;
 using ClearSight.Core.Enums;
+using ClearSight.Core.Interfaces.Services;
 using ClearSight.Core.Mosels;
-using ClearSight.Infrastructure.Context;
 using ClearSight.Infrastructure.Implementations.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Serilog;
-using System.ComponentModel;
 using System.Security.Claims;
-using System.Text.RegularExpressions;
 
 namespace ClearSight.Api.Controllers
 {
@@ -23,18 +18,20 @@ namespace ClearSight.Api.Controllers
     [Produces("application/json")]
     public class PatientsController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly IMapper _mapper;
         private readonly CloudinaryService _cloudinaryService;
         private readonly MLModelService _mlModelService;
+        private readonly IPatientService _patientService;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<PatientsController> _logger;
 
 
-        public PatientsController(AppDbContext context, IMapper mapper, CloudinaryService cloudinaryService, MLModelService mlModelService)
+        public PatientsController(CloudinaryService cloudinaryService, MLModelService mlModelService, IPatientService patientService, IConfiguration configuration, ILogger<PatientsController> logger)
         {
-            _context = context;
-            _mapper = mapper;
             _cloudinaryService = cloudinaryService;
             _mlModelService = mlModelService;
+            _patientService = patientService;
+            _configuration = configuration;
+            _logger = logger;
         }
 
         /// <summary>
@@ -49,17 +46,10 @@ namespace ClearSight.Api.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), 401)]
         [HttpGet("Profile")]
         [Authorize(Roles = "Patient")]
-        public IActionResult Profile()
+        public async Task<IActionResult> Profile()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            var patient = _context.Patients.Include(u=>u.User).ThenInclude(p=>p.PhoneNumbers).FirstOrDefault(p=>p.PatientId == userId);
-
-            if (patient == null)
-                return BadRequest(new ApiErrorResponse { err_message = "User Not Found" });
-
-            var patientDto =_mapper.Map<PatientProfileDto>(patient);
-
+            var patientId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var patientDto = await _patientService.GetPatientDtoByIdAsync(patientId);
             return Ok(patientDto);
         }
 
@@ -78,54 +68,22 @@ namespace ClearSight.Api.Controllers
         [ProducesResponseType(typeof(ServerErrorResponse), 500)]
         [HttpPost("EditProfile")]
         [Authorize(Roles = "Patient")]
-        public async Task<IActionResult> EditProfile([FromForm]PatientEditProfileDto dto)
+        public async Task<IActionResult> EditProfile([FromForm] PatientEditProfileDto dto)
         {
-            var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var patient = _context.Patients.Include(p=>p.User).ThenInclude(p=>p.PhoneNumbers).FirstOrDefault(u=>u.PatientId==id);
+            var patientId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var patient = await _patientService.GetPatientByIdAsync(patientId);
 
             if (patient == null)
                 return BadRequest(new ApiErrorResponse { err_message = "Invalid Details,Patient Data Not Found" });
 
             try
             {
-                if(dto.FullName != null)
-                {
-                    patient.User.FullName = dto.FullName;
-                }
-                if (dto.ProfileImage != null || dto.ProfileImage?.Length > 0)
-                {
-                    var imageUrl = await _cloudinaryService.UploadImageAsync(dto.ProfileImage,CloudFolder.UsersProfile);
-                    patient.User.ProfileImagePath = imageUrl;
-                }
-                var existingNumbers = patient.User.PhoneNumbers.Select(p => p.PhoneNumber).ToList();
-                var newNumbers = dto?.PhoneNumbers;
-                foreach (var phoneNumber in newNumbers)
-                {
-                    var regex = @"^01[0125]\d{8}$|^0\d{7,9}$|^1[5679]\d{3}$";
-                    if (!existingNumbers.Contains(phoneNumber) && Regex.IsMatch(phoneNumber, regex))
-                    {
-                        patient.User.PhoneNumbers.Add(new UserPhoneNumber
-                        {
-                            PhoneNumber = phoneNumber,
-                            User = patient.User
-                        });
-                    }
-                }
-
-                var numbersToRemove = patient.User.PhoneNumbers.Where(p => !newNumbers.Contains(p.PhoneNumber)).ToList();
-
-                foreach (var number in numbersToRemove)
-                {
-                    patient.User.PhoneNumbers.Remove(number);
-                }
-
-                _context.Update(patient);
-                _context.SaveChanges();
-                return Ok(new ApiSuccessResponse{ result = "Updated Successfully" });
+                await _patientService.UpdatePatient(patient, dto);
+                return Ok(new ApiSuccessResponse { result = "Updated Successfully" });
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Exception While Edit Patient Profile");
+                _logger.LogError(ex, "Exception While Edit Patient Profile");
                 return BadRequest(new ServerErrorResponse { err_message = ex.Message });
             }
         }
@@ -135,14 +93,46 @@ namespace ClearSight.Api.Controllers
         /// </summary>
         /// <returns>Returns Doctors Data.</returns>
         /// <response code="200">List Of Doctors Data.</response>
-        [ProducesResponseType(typeof(List<DoctorProfileDto>), 200)]
+        [ProducesResponseType(typeof(PagedResult<DoctorProfileDto>), 200)]
         [HttpGet("DoctorsList")]
         [Authorize(Roles = "Patient")]
-        public IActionResult DoctorsList()
+        public async Task<IActionResult> DoctorsList(int pageNumber = 1, int pageSize = 5)
         {
-            var doctors = _context.Doctors.Include(x => x.User).ThenInclude(x => x.PhoneNumbers).ToList();
-            var doctorsList = _mapper.Map<List<DoctorProfileDto>>(doctors);
-            return Ok(doctorsList);
+            var totalCount = await _patientService.GetDoctorsCountAsync();
+            var items = await _patientService.GetDoctorsDtosAsync(pageNumber, pageSize);
+
+            var pagedResult = new PagedResult<DoctorProfileDto>
+            {
+                Items = items.ToList(),
+                TotalCount = totalCount,
+                PageSize = pageSize,
+                CurrentPage = pageNumber
+            };
+
+            return Ok(pagedResult);
+        }
+        /// <summary>
+        /// Search Using Doctor Name.
+        /// </summary>
+        /// <returns>Returns Doctors Data.</returns>
+        /// <response code="200">List Of Doctors Data.</response>
+        [ProducesResponseType(typeof(PagedResult<DoctorProfileDto>), 200)]
+        [HttpGet("SearchUsingDoctorName")]
+        [Authorize(Roles = "Patient")]
+        public async Task<IActionResult> SearchUsingDoctorName(string doctorName, int pageNumber = 1, int pageSize = 5)
+        {
+            var totalCount = await _patientService.GetDoctorsCountAsync(x => x.User.FullName.Contains(doctorName));
+            var items = await _patientService.GetDoctorsDtosAsync(x => x.User.FullName.Contains(doctorName), pageNumber, pageSize);
+
+            var pagedResult = new PagedResult<DoctorProfileDto>
+            {
+                Items = items.ToList(),
+                TotalCount = totalCount,
+                PageSize = pageSize,
+                CurrentPage = pageNumber
+            };
+
+            return Ok(pagedResult);
         }
 
         /// <summary>
@@ -150,19 +140,27 @@ namespace ClearSight.Api.Controllers
         /// </summary>
         /// <returns>Returns List Doctors That Have Access To Patient Data.</returns>
         /// <response code="200">List Of Doctors Data.</response>
-        [ProducesResponseType(typeof(List<DoctorProfileDto>), 200)]
+        [ProducesResponseType(typeof(PagedResult<DoctorProfileDto>), 200)]
 
         [HttpGet("access-list")]
         [Authorize(Roles = "Patient")]
-        public IActionResult DoctorAccessList()
+        public async Task<IActionResult> DoctorAccessList(int pageNumber = 1, int pageSize = 5)
         {
             var patientId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var grantDoctorList = _context.PatientDoctorAccess.Include(x=>x.Doctor).ThenInclude(x => x.User).ThenInclude(x => x.PhoneNumbers).Where(x => x.PatientId == patientId)
-                .Select(x=>x.Doctor).ToList();
+            var grantDoctorList = await _patientService.GetDoctorsCountAsync(patientId);
 
-            var doctorsList = _mapper.Map<IEnumerable<DoctorProfileDto>>(grantDoctorList);
-            return Ok(doctorsList);
+            var items = await _patientService.GetDoctorsAccessAsync(patientId, pageNumber, pageSize);
+
+            var pagedResult = new PagedResult<DoctorProfileDto>
+            {
+                Items = items.ToList(),
+                TotalCount = grantDoctorList,
+                PageSize = pageSize,
+                CurrentPage = pageNumber
+            };
+
+            return Ok(pagedResult);
         }
 
 
@@ -180,28 +178,20 @@ namespace ClearSight.Api.Controllers
         {
             var patientId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var doctorExists = _context.Doctors.Find(doctorId);
+            var isDoctorExists = await _patientService.FindDoctor(doctorId);
 
-            if (doctorExists == null)
+            if (!isDoctorExists)
                 return BadRequest(new ApiErrorResponse { err_message = "Invalid doctor ID." });
 
-            // Check if access is already granted
-            var exists = await _context.PatientDoctorAccess
-                .AnyAsync(a => a.PatientId == patientId && a.DoctorId == doctorId);
+            var exists = await _patientService.DoctorHasAccess(patientId, doctorId);
 
             if (exists)
             {
-                return BadRequest(new ApiErrorResponse { err_message="Doctor already has access." });
+                return BadRequest(new ApiErrorResponse { err_message = "Doctor already has access." });
             }
+            await _patientService.GrandDoctorAccess(patientId, doctorId);
 
-            _context.PatientDoctorAccess.Add(new PatientDoctorAccess
-            {
-                DoctorId = doctorId,
-                PatientId = patientId
-            });
-
-            await _context.SaveChangesAsync();
-            return Ok(new ApiSuccessResponse{ result = "Doctor access granted." });
+            return Ok(new ApiSuccessResponse { result = "Doctor access granted." });
         }
 
 
@@ -219,22 +209,21 @@ namespace ClearSight.Api.Controllers
         {
             var patientId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var access = await _context.PatientDoctorAccess
-                .FirstOrDefaultAsync(a => a.PatientId == patientId && a.DoctorId == doctorId);
-            
-            var doctorExists = _context.Doctors.Find(doctorId);
-            if (doctorExists == null)
-                return BadRequest(new ApiErrorResponse { err_message = "Invalid doctor ID." });
-
-            if (access == null)
+            var access = await _patientService.DoctorHasAccess(patientId, doctorId);
+            if (!access)
             {
                 return NotFound(new ApiErrorResponse { err_message = "Access not found." });
             }
 
-            _context.PatientDoctorAccess.Remove(access);
-            await _context.SaveChangesAsync();
+            var doctorExists = await _patientService.FindDoctor(doctorId);
+            if (!doctorExists)
+                return BadRequest(new ApiErrorResponse { err_message = "Invalid doctor ID." });
 
-            return Ok(new ApiSuccessResponse{ result = "Doctor access revoked." });
+
+
+            await _patientService.RemoveDoctorAccess(patientId, doctorId);
+
+            return Ok(new ApiSuccessResponse { result = "Doctor access revoked." });
         }
 
         /// <summary>
@@ -250,13 +239,13 @@ namespace ClearSight.Api.Controllers
         [ProducesResponseType(typeof(ServerErrorResponse), 500)]
         [HttpPost("Scan")]
         [Authorize(Roles = "Patient")]
-        public async Task<IActionResult> Scan([FromForm]ScanDto scan)
+        public async Task<IActionResult> Scan([FromForm] ScanDto scan)
         {
             if (scan.ScanImage == null || scan.ScanImage.Length == 0)
                 return BadRequest(new ApiErrorResponse { err_message = "No file uploaded." });
 
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var patient = _context.Patients.Include(x => x.User).FirstOrDefault(x => x.PatientId == userId);
+            var patientId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var patient = await _patientService.GetPatientByIdAsync(patientId);
 
             try
             {
@@ -264,48 +253,58 @@ namespace ClearSight.Api.Controllers
 
                 var prediction = await _mlModelService.Predict(scan.ScanImage);
 
-                var Check = new PatientHistory()
+                if (!prediction.IsSuccess)
+                    return StatusCode(500, new ServerErrorResponse { err_message = prediction?.Result?.Prediction ?? "Error" });
+
+                var check = new PatientHistory()
                 {
                     PatientName = patient.User.FullName,
                     Date = DateTime.UtcNow,
-                    PatientId = userId,
+                    PatientId = patientId,
                     FundusCameraPath = imageUrl,
                     Patient = patient,
-                    FundusCameraResult = prediction
+                    FundusCameraResult = prediction.Result.Prediction,
+                    Confidence = prediction.Result.Confidence,
+                    ArabicName = prediction.ArabicName,
+                    DiseaseMsg = prediction.DiseaseMsg,
                 };
 
-                _context.PatientHistories.Add(Check);
-                _context.SaveChanges();
-                var res =_mapper.Map<PatientHistoryDto>(Check);
+                var res = await _patientService.AddPatientHistory(check);
                 return Ok(res);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Exception while Make new scan");
+                _logger.LogError(ex, "Exception while Make new scan");
                 return StatusCode(500, new ServerErrorResponse { err_message = ex.Message });
             }
 
         }
-        
+
         /// <summary>
         /// Get Patient History.
         /// </summary>
         /// <returns>Returns Patient History.</returns>
         /// <response code="200">List Of Patient History</response>
-        [ProducesResponseType(typeof(List<PatientHistoryDto>), 200)]
+        [ProducesResponseType(typeof(PagedResult<PatientHistoryDto>), 200)]
         [HttpGet("GetPatientHistory")]
         [Authorize(Roles = "Patient")]
-        public IActionResult GetPatientHistory()
+        public async Task<IActionResult> GetPatientHistory(int pageNumber = 1, int pageSize = 5)
         {
             var patientId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var patient = _context.Patients.Include(x => x.User).FirstOrDefault(x => x.PatientId == patientId);
-            var history = _context.PatientHistories.Include(x => x.Doctor).Where(x => x.PatientId == patientId).OrderByDescending(o => o.Date).ToList();
-            
-            var patientHistory = _mapper.Map<IEnumerable<PatientHistoryDto>>(history);
 
-            return Ok(patientHistory);
+            var totalCount = await _patientService.GetPatientHistoriesCountAsync(patientId);
+            var items = await _patientService.GetPatientHistoryAsync(patientId, pageNumber, pageSize);
+
+            var pagedResult = new PagedResult<PatientHistoryDto>
+            {
+                Items = items.ToList(),
+                TotalCount = totalCount,
+                PageSize = pageSize,
+                CurrentPage = pageNumber
+            };
+
+            return Ok(pagedResult);
         }
-
 
     }
 }

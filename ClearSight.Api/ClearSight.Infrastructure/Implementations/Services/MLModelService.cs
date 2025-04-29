@@ -1,48 +1,86 @@
-﻿using Microsoft.AspNetCore.Http;
-using System.Net.Http;
+﻿using ClearSight.Core.Dtos.BusnessDtos;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Net.Mime;
-using System.Threading.Tasks;
 
 namespace ClearSight.Infrastructure.Implementations.Services
 {
     public class MLModelService
     {
         private readonly HttpClient _httpClient;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<MLModelService> _logger;
 
-        public MLModelService(HttpClient httpClient)
+        public MLModelService(HttpClient httpClient, IConfiguration configuration, ILogger<MLModelService> logger)
         {
             _httpClient = httpClient;
+            _configuration = configuration;
+            _logger = logger;
         }
 
-        public async Task<string> Predict(IFormFile file)
+        public async Task<MLModelDto> Predict(IFormFile file)
         {
-            return "Diabitics";
+            return new MLModelDto
+            {
+                Result = new MLModelResult
+                {
+                    Prediction = "Diabetic Retinopathy",
+                    Confidence = 90.5,
+                },
+                IsSuccess = true,
+                ArabicName = _configuration["DiseasesMSG:Diabetic Retinopathy:0"],
+                DiseaseMsg = _configuration["DiseasesMSG:Diabetic Retinopathy:1"],
+            };
             using var form = new MultipartFormDataContent();
             var fileContent = new StreamContent(file.OpenReadStream());
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
 
-            form.Add(fileContent, "file", file.FileName);
+            form.Add(fileContent, "image", file.FileName);
             try
             {
-                var flaskApiUrl = "http://127.0.0.1:5000//predict";
+                var flaskApiUrl = _configuration["ModelURL"];
                 var response = await _httpClient.PostAsync(flaskApiUrl, form);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var jsonResponse = await response.Content.ReadAsStringAsync();
-                    return jsonResponse;
+                    var jsonResponse = await response.Content.ReadFromJsonAsync<MLModelResult>();
+                    return new MLModelDto
+                    {
+                        Result = jsonResponse,
+                        IsSuccess = true,
+                        ArabicName = _configuration[$"DiseasesMSG:{jsonResponse.Prediction}:0"],
+                        DiseaseMsg = _configuration[$"DiseasesMSG:{jsonResponse.Prediction}:1"],
+                    };
                 }
                 else
                 {
-                    return "Error calling Flask API.";
+                    var jsonErrorResponse = await response.Content.ReadFromJsonAsync<MLModelError>();
+
+                    return new MLModelDto
+                    {
+                        Result = new MLModelResult
+                        {
+                            Prediction = jsonErrorResponse.error
+                        },
+                        IsSuccess = false
+                    };
                 }
             }
             catch (Exception ex)
             {
-                return $"Internal server error: {ex.Message}";
+                _logger.LogError(ex, "Error calling Flask API.");
+                return new MLModelDto
+                {
+                    Result = null,
+                    IsSuccess = false
+                };
             }
         }
+
+
     }
+
+
 }

@@ -1,4 +1,6 @@
-﻿namespace ClearSight.Core.Mosels
+﻿using ClearSight.Core.Enums;
+
+namespace ClearSight.Core.Mosels
 {
     public class Doctor
     {
@@ -10,7 +12,7 @@
         public TimeOnly AvailableFrom { get; set; }
         public TimeOnly AvailableTo { get; set; }
         public bool AvailableForCureentMonth { get; set; }
-        public string[]? DaysOff { get; set; } = [];
+        public DaysOff DaysOff { get; set; } 
         public string? Address { get; set; } 
 
     }

@@ -19,6 +19,7 @@ namespace ClearSight.Core.Helpers
                 .ForMember(m => m.UserName, s => s.MapFrom(s => s.User.UserName))
                 .ForMember(m => m.ProfileImagePath, s => s.MapFrom(s => s.User.ProfileImagePath))
                 .ForMember(m => m.PhoneNumbers, s => s.MapFrom(s => s.User.PhoneNumbers.Select(p => p.PhoneNumber).ToList()))
+                .ForMember(m => m.DaysOff, s => s.MapFrom(s => DaysOffHelper.ConvertToStringList(s.DaysOff)))
                 .ForMember(m => m.AvailableFrom, s => s.MapFrom(s => s.AvailableFrom.ToShortTimeString()))
                 .ForMember(m => m.AvailableTo, s => s.MapFrom(s => s.AvailableTo.ToShortTimeString()));
             CreateMap<Patient, PatientProfileDto>()

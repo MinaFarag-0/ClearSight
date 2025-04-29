@@ -28,8 +28,10 @@ namespace ClearSight.Api.Controllers
         private readonly AppDbContext _context;
         private readonly ActivateUserAccountsServices _activateUserAccounts;
         private readonly GenerateCodeServices _generateCodeServices;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(AuthenticationService AuthenticationService, MailingService emailSender, UserManager<User> userManager, SignInManager<User> signInManager, AppDbContext appDbContext, ActivateUserAccountsServices activateUserAccounts, GenerateCodeServices generateCodeServices)
+        public AuthController(AuthenticationService AuthenticationService, MailingService emailSender, UserManager<User> userManager, SignInManager<User> signInManager, AppDbContext appDbContext, ActivateUserAccountsServices activateUserAccounts, GenerateCodeServices generateCodeServices, IConfiguration configuration, ILogger<AuthController> logger)
         {
             _authenticationService = AuthenticationService;
             _emailSender = emailSender;
@@ -38,7 +40,10 @@ namespace ClearSight.Api.Controllers
             _context = appDbContext;
             _activateUserAccounts = activateUserAccounts;
             _generateCodeServices = generateCodeServices;
+            _configuration = configuration;
+            _logger = logger;
         }
+        
         /// <summary>
         /// Generate a new userName.
         /// </summary>
@@ -101,7 +106,7 @@ namespace ClearSight.Api.Controllers
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Login Error");
+                _logger.LogError(ex, "Login Error");
                 await _userManager.DeleteAsync(user);
                 return BadRequest(new ServerErrorResponse { StatusCode =500, err_message = ex.Message });
             }
@@ -212,6 +217,7 @@ namespace ClearSight.Api.Controllers
                 var str = new StreamReader(FilePaths.EmailConfirmationSuccess);
                 var mailText = str.ReadToEnd();
                 str.Close();
+                mailText = mailText.Replace("FRONTENDLOGIN_URL", _configuration["FRONTENDLOGIN_URL"]);
                 return Content(mailText, "text/html");
 
             }
@@ -322,6 +328,7 @@ namespace ClearSight.Api.Controllers
             
             return Ok(result);
         }
+
         /// <summary>
         /// Call this api to revoke your refresh token 
         /// </summary>

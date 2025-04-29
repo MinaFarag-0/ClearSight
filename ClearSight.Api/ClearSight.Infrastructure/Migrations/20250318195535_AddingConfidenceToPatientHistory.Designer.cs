@@ -4,6 +4,7 @@ using ClearSight.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ClearSight.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250318195535_AddingConfidenceToPatientHistory")]
+    partial class AddingConfidenceToPatientHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -39,8 +42,8 @@ namespace ClearSight.Infrastructure.Migrations
                     b.Property<TimeOnly>("AvailableTo")
                         .HasColumnType("time");
 
-                    b.Property<byte>("DaysOff")
-                        .HasColumnType("tinyint");
+                    b.PrimitiveCollection<string>("DaysOff")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("DoctorId");
 

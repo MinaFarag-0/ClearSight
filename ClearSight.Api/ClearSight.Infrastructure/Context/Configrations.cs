@@ -50,6 +50,8 @@ namespace ClearSight.Infrastructure.Context
                    .WithOne(x => x.Doctor)
                    .HasForeignKey(x => x.DoctorId)
                    .OnDelete(DeleteBehavior.NoAction);
+                builder.Property(u => u.DaysOff)
+                    .HasConversion<byte>();
             }
         }
 

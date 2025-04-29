@@ -24,12 +24,12 @@ namespace ClearSight.Infrastructure.Implementations.Services
             _cloudinary = new Cloudinary(account);
         }
 
-        public async Task<string> UploadImageAsync(IFormFile file,CloudFolder folder)
+        public async Task<string> UploadImageAsync(IFormFile file, CloudFolder folder)
         {
             using var stream = file.OpenReadStream();
             var uploadParams = new ImageUploadParams()
             {
-                AllowedFormats = ["jpg","png","jpeg"],
+                AllowedFormats = ["jpg", "png", "jpeg"],
                 Folder = folder.ToString(),
                 File = new FileDescription(Guid.NewGuid().ToString(), stream),
             };
