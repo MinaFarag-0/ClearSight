@@ -28,15 +28,6 @@ namespace ClearSight.Api.Controllers
             _docotrServices = docotrServices;
             _logger = logger;
         }
-        [HttpPost("image")]
-        public async Task<IActionResult> ImageAsync(IFormFile file)
-        {
-            using var stream = file.OpenReadStream();
-
-            var id = await _cloudinaryService.UploadImageAsync(file, CloudFolder.UsersProfile);
-
-            return Ok(id);
-        }
 
         /// <summary>
         /// Get Patients Allowed Doctor To Access Data.
@@ -165,7 +156,7 @@ namespace ClearSight.Api.Controllers
         [ProducesResponseType(typeof(PatientHistoryDto), 200)]
         [ProducesResponseType(typeof(ApiErrorResponse), 400)]
         [ProducesResponseType(typeof(ServerErrorResponse), 500)]
-        [HttpPost("Scan/{patientId:guid}")]
+        [HttpPost("Scan/{patientId:alpha}")]
         [Authorize(Roles = "Doctor")]
         public async Task<IActionResult> Scan(string patientId, ScanDto dto)
         {
@@ -232,7 +223,7 @@ namespace ClearSight.Api.Controllers
         [ProducesResponseType(typeof(PagedResult<PatientHistoryDto>), 200)]
         [ProducesResponseType(typeof(ApiErrorResponse), 400)]
         [ProducesResponseType(typeof(ApiErrorResponse), 403)]
-        [HttpGet("GetPatientHistory/{patientId:guid}")]
+        [HttpGet("GetPatientHistory/{patientId:alpha}")]
         [Authorize(Roles = "Doctor")]
         public async Task<IActionResult> GetPatientHistory(string patientId, int pageNumber = 1, int pageSize = 5)
         {
