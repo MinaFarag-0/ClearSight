@@ -1,13 +1,9 @@
 ﻿using ClearSight.Core.Mosels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ClearSight.Core.Interfaces.Repository
 {
-    public interface IDoctorReposatory :IBaseRepository<Doctor>
+    public interface IDoctorReposatory : IBaseRepository<Doctor>
     {
+
     }
 }

@@ -6,13 +6,8 @@ using ClearSight.Core.Interfaces.Services;
 using ClearSight.Core.Mosels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace ClearSight.Infrastructure.Implementations.Services
 {
@@ -40,7 +35,7 @@ namespace ClearSight.Infrastructure.Implementations.Services
 
         public async Task<PatientProfileDto> GetPatientDtoByIdAsync(string patientId)
         {
-            var patient = await _unitOfWork.Patients.GetWithIncludesAsync(x=>x.PatientId ==patientId,x=>x.User.PhoneNumbers);
+            var patient = _unitOfWork.Patients.GetPatientWithUserAndPhoneNumbersAsync(patientId);
             var patientDto = _mapper.Map<PatientProfileDto>(patient);
             return patientDto;
         }
@@ -83,25 +78,25 @@ namespace ClearSight.Infrastructure.Implementations.Services
 
         public async Task<bool> FindDoctor(string doctorId)
         {
-            return await _unitOfWork.Doctors.AnyAsync(x=>x.DoctorId == doctorId);
+            return await _unitOfWork.Doctors.AnyAsync(x => x.DoctorId == doctorId);
         }
-        public async Task<bool> DoctorHasAccess(string patientId,string doctorId)
+        public async Task<bool> DoctorHasAccess(string patientId, string doctorId)
         {
             return await _unitOfWork.PatientDoctorAccess
                 .AnyAsync(a => a.PatientId == patientId && a.DoctorId == doctorId);
         }
-        public async Task GrandDoctorAccess(string patientId,string doctorId)
+        public async Task GrandDoctorAccess(string patientId, string doctorId)
         {
             await _unitOfWork.PatientDoctorAccess.AddAsync(new PatientDoctorAccess
-                {
-                    PatientId = patientId,
-                    DoctorId = doctorId
-                });
+            {
+                PatientId = patientId,
+                DoctorId = doctorId
+            });
             await _unitOfWork.SaveChangesAsync();
         }
-        public async Task RemoveDoctorAccess(string patientId,string doctorId)
+        public async Task RemoveDoctorAccess(string patientId, string doctorId)
         {
-            var access = await _unitOfWork.PatientDoctorAccess.FindAsync(x=>x.DoctorId==doctorId&&x.PatientId==patientId);
+            var access = await _unitOfWork.PatientDoctorAccess.FindAsync(x => x.DoctorId == doctorId && x.PatientId == patientId);
             if (access == null)
             {
                 return;
@@ -116,20 +111,20 @@ namespace ClearSight.Infrastructure.Implementations.Services
             var res = _mapper.Map<PatientHistoryDto>(patientHistory);
             return res;
         }
-        
+
         public async Task<IEnumerable<DoctorProfileDto>> GetDoctorsDtosAsync(int pageNumber = 1, int pageSize = 5)
         {
-            var doctors = await _unitOfWork.Doctors.GetAllWithIncludesAsync((pageNumber - 1) * pageSize, pageSize,x=>x.User,x=>x.User.PhoneNumbers);
+            var doctors = await _unitOfWork.Doctors.GetAllWithIncludesAsync((pageNumber - 1) * pageSize, pageSize, x => x.User, x => x.User.PhoneNumbers);
             var doctorDto = _mapper.Map<IEnumerable<DoctorProfileDto>>(doctors);
             return doctorDto;
         }
         public async Task<IEnumerable<DoctorProfileDto>> GetDoctorsDtosAsync(Expression<Func<Doctor, bool>> criteria, int pageNumber = 1, int pageSize = 5)
         {
-            var doctors = await _unitOfWork.Doctors.GetAllWithIncludesAsync(criteria, (pageNumber - 1) * pageSize, pageSize,x=>x.User,x=>x.User.PhoneNumbers);
+            var doctors = await _unitOfWork.Doctors.GetAllWithIncludesAsync(criteria, (pageNumber - 1) * pageSize, pageSize, x => x.User, x => x.User.PhoneNumbers);
             var doctorDto = _mapper.Map<IEnumerable<DoctorProfileDto>>(doctors);
             return doctorDto;
         }
-      
+
         public async Task<int> GetDoctorsCountAsync()
         {
             var doctorsCount = await _unitOfWork.Doctors.CountAsync();
@@ -137,23 +132,23 @@ namespace ClearSight.Infrastructure.Implementations.Services
         }
         public async Task<int> GetDoctorsCountAsync(string patientId)
         {
-            var doctorsCount =await _unitOfWork.PatientDoctorAccess.CountAsync(x => x.PatientId == patientId);
+            var doctorsCount = await _unitOfWork.PatientDoctorAccess.CountAsync(x => x.PatientId == patientId);
             return doctorsCount;
         }
         public async Task<IEnumerable<DoctorProfileDto>> GetDoctorsAccessAsync(string patientId, int pageNumber = 1, int pageSize = 5)
         {
-            var doctors = await _unitOfWork.PatientDoctorAccess.GetAllWithIncludesAsync(x=>x.PatientId==patientId, (pageNumber - 1) * pageSize, pageSize, x => x.Doctor.User, x => x.Doctor.User.PhoneNumbers);
-            var doctorDto = _mapper.Map<IEnumerable<DoctorProfileDto>>(doctors.Select(x=>x.Doctor));
+            var doctors = await _unitOfWork.PatientDoctorAccess.GetAllWithIncludesAsync(x => x.PatientId == patientId, (pageNumber - 1) * pageSize, pageSize, x => x.Doctor.User, x => x.Doctor.User.PhoneNumbers);
+            var doctorDto = _mapper.Map<IEnumerable<DoctorProfileDto>>(doctors.Select(x => x.Doctor));
             return doctorDto;
         }
         public async Task<int> GetDoctorsCountAsync(Expression<Func<Doctor, bool>> criteria)
         {
-            var doctorsCount =await _unitOfWork.Doctors.CountAsync(criteria);
+            var doctorsCount = await _unitOfWork.Doctors.CountAsync(criteria);
             return doctorsCount;
         }
         public async Task<int> GetPatientHistoriesCountAsync(string patientId)
         {
-            var doctorsCount =await _unitOfWork.PatientHistories.CountAsync(x => x.PatientId == patientId);
+            var doctorsCount = await _unitOfWork.PatientHistories.CountAsync(x => x.PatientId == patientId);
             return doctorsCount;
         }
 

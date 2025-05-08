@@ -1,15 +1,8 @@
-﻿using ClearSight.Core.Interfaces.Repository;
+﻿using ClearSight.Core.Constant;
+using ClearSight.Core.Interfaces.Repository;
 using ClearSight.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Asn1;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using ClearSight.Core.Constant;
-using System.Runtime.ConstrainedExecution;
 
 
 namespace ClearSight.Infrastructure.Implementations.Repositories
@@ -62,17 +55,6 @@ namespace ClearSight.Infrastructure.Implementations.Repositories
             return await _context.Set<T>().CountAsync(criteria);
         }
 
-
-        //public async Task<IEnumerable<T>> GetAllWithIncludesAsync(Expression<Func<T, bool>> criteria, params Expression<Func<T, object>>[] includes)
-        //{
-        //    IQueryable<T> query = _context.Set<T>();
-
-        //    foreach (var include in includes)
-        //    {
-        //        query = query.Include(include);
-        //    }
-        //    return query.Where(criteria).ToList();
-        //}
         public async Task<IEnumerable<T>> GetAllWithIncludesAsync(Expression<Func<T, bool>> criteria, params Expression<Func<T, object>>[] includes)
         {
             IQueryable<T> query = _context.Set<T>();
@@ -93,7 +75,7 @@ namespace ClearSight.Infrastructure.Implementations.Repositories
             }
             return query.ToList();
         }
-        public async Task<IEnumerable<T>> GetAllWithIncludesAsync(int skip, int take,params Expression<Func<T, object>>[] includes)
+        public async Task<IEnumerable<T>> GetAllWithIncludesAsync(int skip, int take, params Expression<Func<T, object>>[] includes)
         {
             IQueryable<T> query = _context.Set<T>().Skip(skip).Take(take);
 
@@ -103,7 +85,7 @@ namespace ClearSight.Infrastructure.Implementations.Repositories
             }
             return query.ToList();
         }
-        public async Task<IEnumerable<T>> GetAllWithIncludesAsync(Expression<Func<T, bool>> criteria, int skip, int take,params Expression<Func<T, object>>[] includes)
+        public async Task<IEnumerable<T>> GetAllWithIncludesAsync(Expression<Func<T, bool>> criteria, int skip, int take, params Expression<Func<T, object>>[] includes)
         {
             IQueryable<T> query = _context.Set<T>().Where(criteria).OrderDescending().Skip(skip).Take(take);
 
@@ -186,6 +168,6 @@ namespace ClearSight.Infrastructure.Implementations.Repositories
             return await query.ToListAsync();
         }
 
-       
+
     }
 }

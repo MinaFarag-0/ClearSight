@@ -5,7 +5,7 @@ using ClearSight.Core.Interfaces.Repository;
 using ClearSight.Core.Interfaces.Services;
 using ClearSight.Core.Mosels;
 using ClearSight.Infrastructure.Context;
-using ClearSight.Infrastructure.Implementations.Middlewares;
+using ClearSight.Infrastructure.Implementations.Middelwares;
 using ClearSight.Infrastructure.Implementations.Repositories;
 using ClearSight.Infrastructure.Implementations.Services;
 using ClearSight.Infrastructure.Implementations.UnitOfWork;
@@ -46,13 +46,14 @@ builder.Services.AddControllers()
             var errors = context.ModelState.Values
                 .SelectMany(v => v.Errors)
                 .Select(e => e.ErrorMessage)
-                .ToList();
+                .ToArray();
 
-            var response = new ModelStateErrorResponse
-            {
-                StatusCode = 400,
-                Errors = errors
-            };
+            //var response = new ModelStateErrorResponse
+            //{
+            //    StatusCode = 400,
+            //    Errors = errors
+            //};
+            var response = ApiResponse<string>.FailureResponse(string.Join(',', errors));
 
             return new BadRequestObjectResult(response);
         };
@@ -120,11 +121,12 @@ builder.Services.AddRateLimiter(options =>
         context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
         context.HttpContext.Response.ContentType = "application/json";
 
-        var response = new ApiErrorResponse
-        {
-            StatusCode = 429,
-            err_message = "Too many requests. Please try again later."
-        };
+        //var response = new ApiErrorResponse
+        //{
+        //    StatusCode = 429,
+        //    err_message = "Too many requests. Please try again later."
+        //};
+        var response = ApiResponse<string>.FailureResponse("Too many requests. Please try again later.");
 
         await context.HttpContext.Response.WriteAsync(JsonSerializer.Serialize(response), cancellationToken);
     };
@@ -159,11 +161,13 @@ builder.Services.AddAuthentication(options =>
             {
                 if (!context.Response.HasStarted)
                 {
-                    var response = new ApiErrorResponse
-                    {
-                        StatusCode = 401,
-                        err_message = "Unauthorized: Please provide a valid token."
-                    };
+                    //var response = new ApiErrorResponse
+                    //{
+                    //    StatusCode = 401,
+                    //    err_message = "Unauthorized: Please provide a valid token."
+                    //};
+                    var response = ApiResponse<string>.FailureResponse("Unauthorized: Please provide a valid token.");
+
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     context.Response.ContentType = "application/json";
                     return context.Response.WriteAsync(JsonSerializer.Serialize(response));
@@ -191,11 +195,13 @@ builder.Services.AddAuthentication(options =>
             },
             OnForbidden = context =>
             {
-                var response = new ApiErrorResponse
-                {
-                    StatusCode = 403,
-                    err_message = "You do not have permission to access this resource."
-                };
+                //var response = new ApiErrorResponse
+                //{
+                //    StatusCode = 403,
+                //    err_message = "You do not have permission to access this resource."
+                //};
+                var response = ApiResponse<string>.FailureResponse("You do not have permission to access this resource.");
+
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 context.Response.ContentType = "application/json";
                 return context.Response.WriteAsync(JsonSerializer.Serialize(response));

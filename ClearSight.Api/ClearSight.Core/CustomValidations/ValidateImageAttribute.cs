@@ -1,19 +1,16 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
-using System.IO;
-using System.Linq;
-using Microsoft.AspNetCore.Http;
 
 namespace ClearSight.Core.CustomValidations
 {
     public class ValidateImageAttribute : ValidationAttribute
     {
-        private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png" };
-        private readonly long _maxFileSize; 
+        private readonly string[] _allowedExtensions = [".jpg", ".jpeg", ".png"];
+        private readonly long _maxFileSize;
 
         public ValidateImageAttribute(long maxFileSizeMB)
         {
-            _maxFileSize = maxFileSizeMB * 1024 * 1024; // Convert MB to bytes
+            _maxFileSize = maxFileSizeMB * 1024 * 1024;
         }
 
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)

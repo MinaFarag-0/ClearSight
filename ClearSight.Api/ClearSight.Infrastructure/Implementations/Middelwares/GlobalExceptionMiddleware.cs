@@ -1,15 +1,10 @@
 ﻿using ClearSight.Core.Dtos.ApiResponse;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Org.BouncyCastle.Asn1.Cms;
 using Serilog;
-using System;
 using System.Net;
-using System.Net.Http;
 using System.Text.Json;
-using System.Threading.Tasks;
 
-namespace ClearSight.Infrastructure.Implementations.Middlewares
+namespace ClearSight.Infrastructure.Implementations.Middelwares
 {
     public class GlobalExceptionHandlerMiddleware
     {
@@ -35,14 +30,12 @@ namespace ClearSight.Infrastructure.Implementations.Middlewares
         private async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             Log.Error(exception, "An unhandled exception occurred.");
-            var response = new ServerErrorResponse
-            {
-                StatusCode = StatusCodes.Status500InternalServerError,
-                err_message = "An unexpected error occurred. Please try again later."
-            };
+            var response = ApiResponse<string>
+                    .FailureResponse("An unexpected error occurred. Please try again later.",
+                    HttpStatusCode.InternalServerError);
 
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = response.StatusCode;
+            context.Response.StatusCode = (int)response.StatusCode;
             await context.Response.WriteAsync(JsonSerializer.Serialize(response));
         }
     }

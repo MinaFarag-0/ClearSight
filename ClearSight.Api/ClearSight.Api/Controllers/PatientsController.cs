@@ -41,16 +41,16 @@ namespace ClearSight.Api.Controllers
         /// <response code="200">Patient Profile Data.</response>
         /// <response code="400">User NotFound error</response>
         /// <response code="401">User UnAutorized error</response>
-        [ProducesResponseType(typeof(PatientProfileDto), 200)]
-        [ProducesResponseType(typeof(ApiErrorResponse), 400)]
-        [ProducesResponseType(typeof(ApiErrorResponse), 401)]
+        [ProducesResponseType(typeof(ApiResponse<PatientProfileDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 401)]
         [HttpGet("Profile")]
         [Authorize(Roles = "Patient")]
         public async Task<IActionResult> Profile()
         {
             var patientId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var patientDto = await _patientService.GetPatientDtoByIdAsync(patientId);
-            return Ok(patientDto);
+            return Ok(ApiResponse<PatientProfileDto>.SuccessResponse(patientDto));
         }
 
         /// <summary>
@@ -62,10 +62,10 @@ namespace ClearSight.Api.Controllers
         /// <response code="400">Validation error</response>
         /// <response code="401">UnAuthorized User error</response>
         /// <response code="500">Server error</response>
-        [ProducesResponseType(typeof(ApiSuccessResponse), 200)]
-        [ProducesResponseType(typeof(ApiErrorResponse), 400)]
-        [ProducesResponseType(typeof(ApiErrorResponse), 401)]
-        [ProducesResponseType(typeof(ServerErrorResponse), 500)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 401)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [HttpPost("EditProfile")]
         [Authorize(Roles = "Patient")]
         public async Task<IActionResult> EditProfile([FromForm] PatientEditProfileDto dto)
@@ -74,17 +74,18 @@ namespace ClearSight.Api.Controllers
             var patient = await _patientService.GetPatientByIdAsync(patientId);
 
             if (patient == null)
-                return BadRequest(new ApiErrorResponse { err_message = "Invalid Details,Patient Data Not Found" });
+                return BadRequest(ApiResponse<string>.FailureResponse("Invalid Details,Patient Data Not Found"));
+
 
             try
             {
                 await _patientService.UpdatePatient(patient, dto);
-                return Ok(new ApiSuccessResponse { result = "Updated Successfully" });
+                return Ok(ApiResponse<string>.SuccessResponse("Updated Successfully"));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Exception While Edit Patient Profile");
-                return BadRequest(new ServerErrorResponse { err_message = ex.Message });
+                return BadRequest(ApiResponse<string>.FailureResponse(ex.Message));
             }
         }
 
@@ -93,7 +94,7 @@ namespace ClearSight.Api.Controllers
         /// </summary>
         /// <returns>Returns Doctors Data.</returns>
         /// <response code="200">List Of Doctors Data.</response>
-        [ProducesResponseType(typeof(PagedResult<DoctorProfileDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<DoctorProfileDto>>), 200)]
         [HttpGet("DoctorsList")]
         [Authorize(Roles = "Patient")]
         public async Task<IActionResult> DoctorsList(int pageNumber = 1, int pageSize = 5)
@@ -109,14 +110,14 @@ namespace ClearSight.Api.Controllers
                 CurrentPage = pageNumber
             };
 
-            return Ok(pagedResult);
+            return Ok(ApiResponse<PagedResult<DoctorProfileDto>>.SuccessResponse(pagedResult));
         }
         /// <summary>
         /// Search Using Doctor Name.
         /// </summary>
         /// <returns>Returns Doctors Data.</returns>
         /// <response code="200">List Of Doctors Data.</response>
-        [ProducesResponseType(typeof(PagedResult<DoctorProfileDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<DoctorProfileDto>>), 200)]
         [HttpGet("SearchUsingDoctorName")]
         [Authorize(Roles = "Patient")]
         public async Task<IActionResult> SearchUsingDoctorName(string doctorName, int pageNumber = 1, int pageSize = 5)
@@ -132,7 +133,7 @@ namespace ClearSight.Api.Controllers
                 CurrentPage = pageNumber
             };
 
-            return Ok(pagedResult);
+            return Ok(ApiResponse<PagedResult<DoctorProfileDto>>.SuccessResponse(pagedResult));
         }
 
         /// <summary>
@@ -140,7 +141,7 @@ namespace ClearSight.Api.Controllers
         /// </summary>
         /// <returns>Returns List Doctors That Have Access To Patient Data.</returns>
         /// <response code="200">List Of Doctors Data.</response>
-        [ProducesResponseType(typeof(PagedResult<DoctorProfileDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<DoctorProfileDto>>), 200)]
 
         [HttpGet("access-list")]
         [Authorize(Roles = "Patient")]
@@ -160,7 +161,7 @@ namespace ClearSight.Api.Controllers
                 CurrentPage = pageNumber
             };
 
-            return Ok(pagedResult);
+            return Ok(ApiResponse<PagedResult<DoctorProfileDto>>.SuccessResponse(pagedResult));
         }
 
 
@@ -170,8 +171,8 @@ namespace ClearSight.Api.Controllers
         /// <returns>Returns Success Doctor Was Granted Access Successfully.</returns>
         /// <response code="200">Success.</response>
         /// <response code="400">Error Invalid Doctor Id or Doctor already has access.</response>
-        [ProducesResponseType(typeof(ApiSuccessResponse), 200)]
-        [ProducesResponseType(typeof(ApiErrorResponse), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
         [Authorize(Roles = "Patient")]
         [HttpPost("grant-access")]
         public async Task<IActionResult> GrantDoctorAccess(string doctorId)
@@ -181,17 +182,17 @@ namespace ClearSight.Api.Controllers
             var isDoctorExists = await _patientService.FindDoctor(doctorId);
 
             if (!isDoctorExists)
-                return BadRequest(new ApiErrorResponse { err_message = "Invalid doctor ID." });
+                return BadRequest(ApiResponse<string>.FailureResponse("Invalid doctor ID."));
 
             var exists = await _patientService.DoctorHasAccess(patientId, doctorId);
 
             if (exists)
             {
-                return BadRequest(new ApiErrorResponse { err_message = "Doctor already has access." });
+                return BadRequest(ApiResponse<string>.SuccessResponse("Doctor already has access."));
             }
             await _patientService.GrandDoctorAccess(patientId, doctorId);
 
-            return Ok(new ApiSuccessResponse { result = "Doctor access granted." });
+            return Ok(ApiResponse<string>.SuccessResponse("Doctor access granted."));
         }
 
 
@@ -201,8 +202,8 @@ namespace ClearSight.Api.Controllers
         /// <returns>Returns Success Result.</returns>
         /// <response code="200">Success Doctor Was Revoked To Access Patient History.</response>
         /// <response code="400">Error Invalid Doctor Id or Doctor already has access.</response>
-        [ProducesResponseType(typeof(ApiSuccessResponse), 200)]
-        [ProducesResponseType(typeof(ApiErrorResponse), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
         [HttpPost("revoke-access")]
         [Authorize(Roles = "Patient")]
         public async Task<IActionResult> RevokeDoctorAccess(string doctorId)
@@ -212,18 +213,17 @@ namespace ClearSight.Api.Controllers
             var access = await _patientService.DoctorHasAccess(patientId, doctorId);
             if (!access)
             {
-                return NotFound(new ApiErrorResponse { err_message = "Access not found." });
+                return BadRequest(ApiResponse<string>.FailureResponse("Access not found."));
             }
 
             var doctorExists = await _patientService.FindDoctor(doctorId);
             if (!doctorExists)
-                return BadRequest(new ApiErrorResponse { err_message = "Invalid doctor ID." });
-
-
+            {
+                return BadRequest(ApiResponse<string>.FailureResponse("Invalid doctor ID."));
+            }
 
             await _patientService.RemoveDoctorAccess(patientId, doctorId);
-
-            return Ok(new ApiSuccessResponse { result = "Doctor access revoked." });
+            return Ok(ApiResponse<string>.SuccessResponse("Doctor access revoked."));
         }
 
         /// <summary>
@@ -234,15 +234,15 @@ namespace ClearSight.Api.Controllers
         /// <response code="200">Prediction successfully</response>
         /// <response code="400">No file uploaded error</response>
         /// <response code="500">Internal server error</response>
-        [ProducesResponseType(typeof(PatientHistoryDto), 200)]
-        [ProducesResponseType(typeof(ModelStateErrorResponse), 400)]
-        [ProducesResponseType(typeof(ServerErrorResponse), 500)]
+        [ProducesResponseType(typeof(ApiResponse<PatientHistoryDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [HttpPost("Scan")]
         [Authorize(Roles = "Patient")]
         public async Task<IActionResult> Scan([FromForm] ScanDto scan)
         {
             if (scan.ScanImage == null || scan.ScanImage.Length == 0)
-                return BadRequest(new ApiErrorResponse { err_message = "No file uploaded." });
+                return BadRequest(ApiResponse<string>.FailureResponse("No file uploaded."));
 
             var patientId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var patient = await _patientService.GetPatientByIdAsync(patientId);
@@ -254,7 +254,7 @@ namespace ClearSight.Api.Controllers
                 var prediction = await _mlModelService.Predict(scan.ScanImage);
 
                 if (!prediction.IsSuccess)
-                    return StatusCode(500, new ServerErrorResponse { err_message = prediction?.Result?.Prediction ?? "Error" });
+                    return StatusCode(500, ApiResponse<string>.FailureResponse(prediction?.Result?.Prediction ?? "Error"));
 
                 var check = new PatientHistory()
                 {
@@ -270,12 +270,12 @@ namespace ClearSight.Api.Controllers
                 };
 
                 var res = await _patientService.AddPatientHistory(check);
-                return Ok(res);
+                return Ok(ApiResponse<PatientHistoryDto>.SuccessResponse(res));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Exception while Make new scan");
-                return StatusCode(500, new ServerErrorResponse { err_message = ex.Message });
+                return StatusCode(500, ApiResponse<string>.FailureResponse(ex.Message));
             }
 
         }
@@ -285,7 +285,7 @@ namespace ClearSight.Api.Controllers
         /// </summary>
         /// <returns>Returns Patient History.</returns>
         /// <response code="200">List Of Patient History</response>
-        [ProducesResponseType(typeof(PagedResult<PatientHistoryDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<PatientHistoryDto>>), 200)]
         [HttpGet("GetPatientHistory")]
         [Authorize(Roles = "Patient")]
         public async Task<IActionResult> GetPatientHistory(int pageNumber = 1, int pageSize = 5)
@@ -303,7 +303,7 @@ namespace ClearSight.Api.Controllers
                 CurrentPage = pageNumber
             };
 
-            return Ok(pagedResult);
+            return Ok(ApiResponse<PagedResult<PatientHistoryDto>>.SuccessResponse(pagedResult));
         }
 
     }

@@ -10,10 +10,9 @@ namespace ClearSight.Infrastructure.Implementations.UnitOfWork
     {
         private readonly AppDbContext _context;
         public IDoctorReposatory Doctors { get; private set; }
+        public IPatientReposatory Patients { get; private set; }
         public IBaseRepository<PatientDoctorAccess> PatientDoctorAccess { get; private set; }
         public IBaseRepository<PatientHistory> PatientHistories { get; private set; }
-
-        public IPatientReposatory Patients { get; private set; }
 
         public UnitOfWork(AppDbContext context)
         {
