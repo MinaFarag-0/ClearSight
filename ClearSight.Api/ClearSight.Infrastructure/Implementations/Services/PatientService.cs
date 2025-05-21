@@ -26,16 +26,14 @@ namespace ClearSight.Infrastructure.Implementations.Services
             _configuration = configuration;
         }
 
-
         public async Task<Patient> GetPatientByIdAsync(string id)
         {
             var patient = await _unitOfWork.Patients.GetWithIncludesAsync(x => x.PatientId == id, x => x.User.PhoneNumbers);
             return patient;
         }
-
         public async Task<PatientProfileDto> GetPatientDtoByIdAsync(string patientId)
         {
-            var patient = _unitOfWork.Patients.GetPatientWithUserAndPhoneNumbersAsync(patientId);
+            var patient = await _unitOfWork.Patients.GetWithIncludesAsync(p => p.PatientId == patientId, x => x.User.PhoneNumbers);
             var patientDto = _mapper.Map<PatientProfileDto>(patient);
             return patientDto;
         }
@@ -75,7 +73,6 @@ namespace ClearSight.Infrastructure.Implementations.Services
             await _unitOfWork.Patients.Update(patient);
             await _unitOfWork.SaveChangesAsync();
         }
-
         public async Task<bool> FindDoctor(string doctorId)
         {
             return await _unitOfWork.Doctors.AnyAsync(x => x.DoctorId == doctorId);
@@ -111,7 +108,6 @@ namespace ClearSight.Infrastructure.Implementations.Services
             var res = _mapper.Map<PatientHistoryDto>(patientHistory);
             return res;
         }
-
         public async Task<IEnumerable<DoctorProfileDto>> GetDoctorsDtosAsync(int pageNumber = 1, int pageSize = 5)
         {
             var doctors = await _unitOfWork.Doctors.GetAllWithIncludesAsync((pageNumber - 1) * pageSize, pageSize, x => x.User, x => x.User.PhoneNumbers);
@@ -124,7 +120,6 @@ namespace ClearSight.Infrastructure.Implementations.Services
             var doctorDto = _mapper.Map<IEnumerable<DoctorProfileDto>>(doctors);
             return doctorDto;
         }
-
         public async Task<int> GetDoctorsCountAsync()
         {
             var doctorsCount = await _unitOfWork.Doctors.CountAsync();
@@ -151,7 +146,6 @@ namespace ClearSight.Infrastructure.Implementations.Services
             var doctorsCount = await _unitOfWork.PatientHistories.CountAsync(x => x.PatientId == patientId);
             return doctorsCount;
         }
-
         public async Task<IEnumerable<PatientHistoryDto>> GetPatientHistoryAsync(string patientId, int pageNumber, int pageSize)
         {
             var patientHistory = await _unitOfWork.PatientHistories.GetAllWithIncludesAsync(x => x.PatientId == patientId, (pageNumber - 1) * pageSize, pageSize, x => x.Doctor.User.PhoneNumbers);

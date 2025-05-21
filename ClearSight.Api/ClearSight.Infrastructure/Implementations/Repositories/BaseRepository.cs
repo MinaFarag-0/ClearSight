@@ -1,5 +1,4 @@
-﻿using ClearSight.Core.Constant;
-using ClearSight.Core.Interfaces.Repository;
+﻿using ClearSight.Core.Interfaces.Repository;
 using ClearSight.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -54,27 +53,6 @@ namespace ClearSight.Infrastructure.Implementations.Repositories
         {
             return await _context.Set<T>().CountAsync(criteria);
         }
-
-        public async Task<IEnumerable<T>> GetAllWithIncludesAsync(Expression<Func<T, bool>> criteria, params Expression<Func<T, object>>[] includes)
-        {
-            IQueryable<T> query = _context.Set<T>();
-
-            foreach (var include in includes)
-            {
-                query = query.Include(include);
-            }
-            return query.Where(criteria).ToList();
-        }
-        public async Task<IEnumerable<T>> GetAllWithIncludesAsync(params Expression<Func<T, object>>[] includes)
-        {
-            IQueryable<T> query = _context.Set<T>();
-
-            foreach (var include in includes)
-            {
-                query = query.Include(include);
-            }
-            return query.ToList();
-        }
         public async Task<IEnumerable<T>> GetAllWithIncludesAsync(int skip, int take, params Expression<Func<T, object>>[] includes)
         {
             IQueryable<T> query = _context.Set<T>().Skip(skip).Take(take);
@@ -110,7 +88,6 @@ namespace ClearSight.Infrastructure.Implementations.Repositories
         {
             return await _context.Set<T>().AnyAsync(predicate);
         }
-
         public async Task<bool> AnyAsync()
         {
             return await _context.Set<T>().AnyAsync();
@@ -125,49 +102,6 @@ namespace ClearSight.Infrastructure.Implementations.Repositories
 
             return await query.SingleOrDefaultAsync(criteria);
         }
-
-        public async Task<IEnumerable<T>> FindAllAsync(Expression<Func<T, bool>> criteria, string[] includes = null)
-        {
-            IQueryable<T> query = _context.Set<T>();
-
-            if (includes != null)
-                foreach (var include in includes)
-                    query = query.Include(include);
-
-            return await query.Where(criteria).ToListAsync();
-        }
-
-        public async Task<IEnumerable<T>> FindAllAsync(Expression<Func<T, bool>> criteria, int skip, int take)
-        {
-            return await _context.Set<T>().Where(criteria).Skip(skip).Take(take).ToListAsync();
-        }
-        public async Task<IEnumerable<T>> FindAllAsync(int skip, int take)
-        {
-            return await _context.Set<T>().Skip(skip).Take(take).ToListAsync();
-        }
-
-        public async Task<IEnumerable<T>> FindAllAsync(Expression<Func<T, bool>> criteria, int? skip, int? take,
-            Expression<Func<T, object>> orderBy = null, string orderByDirection = OrderBy.Ascending)
-        {
-            IQueryable<T> query = _context.Set<T>().Where(criteria);
-
-            if (take.HasValue)
-                query = query.Take(take.Value);
-
-            if (skip.HasValue)
-                query = query.Skip(skip.Value);
-
-            if (orderBy != null)
-            {
-                if (orderByDirection == OrderBy.Ascending)
-                    query = query.OrderBy(orderBy);
-                else
-                    query = query.OrderByDescending(orderBy);
-            }
-
-            return await query.ToListAsync();
-        }
-
 
     }
 }

@@ -29,6 +29,66 @@ namespace ClearSight.Api.Controllers
         }
 
         /// <summary>
+        /// Get Doctor Profile Data.
+        /// </summary>
+        /// <returns>Returns Doctor Profile Data.</returns>
+        /// <response code="200">Doctor Profile Data.</response>
+        /// <response code="400">User NotFound error</response>
+        [ProducesResponseType(typeof(ApiResponse<DoctorProfileDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [HttpGet("Profile")]
+        [Authorize(Roles = "Doctor")]
+        public async Task<IActionResult> Profile()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var doctor = await _docotrServices.GetDoctorDtoByIdAsync(userId);
+
+            if (doctor == null)
+                return BadRequest(ApiResponse<string>.FailureResponse("User Not Found"));
+
+            return Ok(ApiResponse<DoctorProfileDto>.SuccessResponse(doctor));
+        }
+
+        /// <summary>
+        /// Edit Doctor Profile.
+        /// </summary>
+        /// <param name="dto">Doctor Profile details.</param>
+        /// <returns>Returns success message or validation errors.</returns>
+        /// <response code="200">profile data edited successfully</response>
+        /// <response code="400">Validation error</response>
+        /// <response code="401">UnAuthorized User error</response>
+        /// <response code="404">User NotFound error</response>
+        /// <response code="500">Internal Server error</response>
+        [ProducesResponseType(typeof(ApiResponse<string>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 404)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 401)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
+        [HttpPost("EditProfile")]
+        [Authorize(Roles = "Doctor")]
+        public async Task<IActionResult> EditProfile([FromForm] DoctorProfileEditDto dto)
+        {
+            var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var doctor = await _docotrServices.GetDoctorByIdAsync(id);
+
+            if (doctor == null)
+                return BadRequest(ApiResponse<string>.FailureResponse("User Not Found"));
+
+            try
+            {
+                await _docotrServices.UpdateDoctor(doctor, dto);
+                return Ok(ApiResponse<string>.SuccessResponse("Updated Successfully"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "error while edit doctor profile data");
+                return BadRequest(ApiResponse<string>.FailureResponse(ex.Message));
+            }
+        }
+
+
+        /// <summary>
         /// Get Patients Allowed Doctor To Access Data.
         /// </summary>
         /// <returns>Returns Patients Data.</returns>
@@ -81,65 +141,6 @@ namespace ClearSight.Api.Controllers
         }
 
 
-        /// <summary>
-        /// Get Doctor Profile Data.
-        /// </summary>
-        /// <returns>Returns Doctor Profile Data.</returns>
-        /// <response code="200">Doctor Profile Data.</response>
-        /// <response code="400">User NotFound error</response>
-        [ProducesResponseType(typeof(ApiResponse<DoctorProfileDto>), 200)]
-        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
-        [HttpGet("Profile")]
-        [Authorize(Roles = "Doctor")]
-        public async Task<IActionResult> Profile()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            var doctor = await _docotrServices.GetDoctorDtoByIdAsync(userId);
-
-            if (doctor == null)
-                return BadRequest(ApiResponse<string>.FailureResponse("User Not Found"));
-
-
-            return Ok(ApiResponse<DoctorProfileDto>.SuccessResponse(doctor));
-        }
-
-        /// <summary>
-        /// Edit Doctor Profile.
-        /// </summary>
-        /// <param name="dto">Doctor Profile details.</param>
-        /// <returns>Returns success message or validation errors.</returns>
-        /// <response code="200">profile data edited successfully</response>
-        /// <response code="400">Validation error</response>
-        /// <response code="401">UnAuthorized User error</response>
-        /// <response code="404">User NotFound error</response>
-        /// <response code="500">Internal Server error</response>
-        [ProducesResponseType(typeof(ApiResponse<string>), 200)]
-        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
-        [ProducesResponseType(typeof(ApiResponse<string>), 404)]
-        [ProducesResponseType(typeof(ApiResponse<string>), 401)]
-        [ProducesResponseType(typeof(ApiResponse<string>), 500)]
-        [HttpPost("EditProfile")]
-        [Authorize(Roles = "Doctor")]
-        public async Task<IActionResult> EditProfile([FromForm] DoctorProfileEditDto dto)
-        {
-            var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var doctor = await _docotrServices.GetDoctorByIdAsync(id);
-
-            if (doctor == null)
-                return BadRequest(ApiResponse<string>.FailureResponse("User Not Found"));
-
-            try
-            {
-                await _docotrServices.UpdateDoctor(doctor, dto);
-                return Ok(ApiResponse<string>.SuccessResponse("Updated Successfully"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "error while edit doctor profile data");
-                return BadRequest(ApiResponse<string>.FailureResponse(ex.Message));
-            }
-        }
 
 
 
