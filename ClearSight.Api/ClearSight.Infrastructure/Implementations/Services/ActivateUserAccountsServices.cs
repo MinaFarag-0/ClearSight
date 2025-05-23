@@ -1,4 +1,5 @@
 ﻿using ClearSight.Core.Enums;
+using ClearSight.Core.Models;
 using ClearSight.Core.Mosels;
 using ClearSight.Infrastructure.Context;
 using Microsoft.AspNetCore.Identity;
@@ -20,7 +21,8 @@ namespace ClearSight.Infrastructure.Implementations.Services
                 {
                     var doctor = new Doctor()
                     {
-                        User = user
+                        User = user,
+                        Status = VerificationStatus.Pending,
                     };
                     _context.Add(doctor);
                     _context.SaveChanges();

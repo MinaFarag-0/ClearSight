@@ -4,5 +4,6 @@
     {
         Patient,
         Doctor,
+        Admin
     }
 }

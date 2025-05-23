@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using ClearSight.Core.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ClearSight.Core.Mosels
 {

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ClearSight.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250307170412_ChangeDisplayNameToFullName_inUserTable")]
-    partial class ChangeDisplayNameToFullName_inUserTable
+    [Migration("20250523153641_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,16 @@ namespace ClearSight.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("ClearSight.Core.Models.Admin", b =>
+                {
+                    b.Property<string>("AdminId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("AdminId");
+
+                    b.ToTable("Admins");
+                });
 
             modelBuilder.Entity("ClearSight.Core.Mosels.Doctor", b =>
                 {
@@ -42,7 +52,14 @@ namespace ClearSight.Infrastructure.Migrations
                     b.Property<TimeOnly>("AvailableTo")
                         .HasColumnType("time");
 
-                    b.PrimitiveCollection<string>("DaysOff")
+                    b.Property<byte>("DaysOff")
+                        .HasColumnType("tinyint");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UploadedDocumentPath")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("DoctorId");
@@ -92,6 +109,9 @@ namespace ClearSight.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<double?>("Confidence")
+                        .HasColumnType("float");
 
                     b.Property<DateTime>("Date")
                         .ValueGeneratedOnAdd()
@@ -374,6 +394,17 @@ namespace ClearSight.Infrastructure.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("UserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("ClearSight.Core.Models.Admin", b =>
+                {
+                    b.HasOne("ClearSight.Core.Mosels.User", "User")
+                        .WithOne()
+                        .HasForeignKey("ClearSight.Core.Models.Admin", "AdminId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ClearSight.Core.Mosels.Doctor", b =>

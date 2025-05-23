@@ -95,7 +95,7 @@ namespace ClearSight.Api.Controllers
         /// <response code="200">List Of Paginated Patients Data.</response>
         [ProducesResponseType(typeof(ApiResponse<PagedResult<PatientProfileDto>>), 200)]
         [HttpGet("PatientsList")]
-        [Authorize(Roles = "Doctor")]
+        [Authorize(Policy = "DoctorApproved")]
         public async Task<IActionResult> PatientsListAsync(int pageNumber = 1, int pageSize = 10)
         {
             var doctorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -121,7 +121,8 @@ namespace ClearSight.Api.Controllers
         /// <response code="200">List Of Paginated Patients Data.</response>
         [ProducesResponseType(typeof(ApiResponse<PagedResult<PatientProfileDto>>), 200)]
         [HttpGet("PatientsListSearch")]
-        [Authorize(Roles = "Doctor")]
+        //[Authorize(Roles = "Doctor")]
+        [Authorize(Policy = "DoctorApproved")]
         public async Task<IActionResult> PatientsListSearchAsync(string patientName, int pageNumber = 1, int pageSize = 10)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -139,8 +140,6 @@ namespace ClearSight.Api.Controllers
             return Ok(ApiResponse<PagedResult<PatientProfileDto>>.SuccessResponse(result));
 
         }
-
-
 
 
 
@@ -250,6 +249,30 @@ namespace ClearSight.Api.Controllers
             };
 
             return Ok(ApiResponse<PagedResult<PatientHistoryDto>>.SuccessResponse(pagedResult));
+        }
+
+
+        /// <summary>
+        /// Request Activate Account.
+        /// </summary>
+        /// <returns>Returns Activation Request Status.</returns>
+        /// <response code="200">Success Request Activate Data.</response>
+        /// <response code="400">Error While Request Activation</response>
+        [ProducesResponseType(typeof(ApiResponse<string>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [Authorize(Roles = "Doctor")]
+        [HttpPost("ActivateAccount")]
+        public async Task<IActionResult> ActivateAccount(IFormFile doc)
+        {
+            var doctorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var res = await _docotrServices.UploadDocumentAsync(doc, doctorId);
+
+            if (res.IsSuccess)
+            {
+                return Ok(ApiResponse<string>.SuccessResponse(res.Response));
+            }
+            return BadRequest(ApiResponse<string>.FailureResponse(res.Response));
         }
     }
 }

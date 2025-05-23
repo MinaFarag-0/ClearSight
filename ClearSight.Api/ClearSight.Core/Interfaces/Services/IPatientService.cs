@@ -1,4 +1,5 @@
 ﻿using ClearSight.Core.Dtos.BusnessDtos;
+using ClearSight.Core.Models;
 using ClearSight.Core.Mosels;
 using System;
 using System.Collections.Generic;

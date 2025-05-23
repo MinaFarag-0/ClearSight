@@ -5,32 +5,32 @@
 namespace ClearSight.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddingDaysOff : Migration
+    public partial class Init2 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<byte>(
-                name: "DaysOff",
+            migrationBuilder.AlterColumn<string>(
+                name: "UploadedDocumentPath",
                 table: "Doctors",
-                type: "tinyint",
-                nullable: false,
-                defaultValue: (byte)0,
+                type: "nvarchar(max)",
+                nullable: true,
                 oldClrType: typeof(string),
-                oldType: "nvarchar(max)",
-                oldNullable: true);
+                oldType: "nvarchar(max)");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<string>(
-                name: "DaysOff",
+                name: "UploadedDocumentPath",
                 table: "Doctors",
                 type: "nvarchar(max)",
-                nullable: true,
-                oldClrType: typeof(byte),
-                oldType: "tinyint");
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "nvarchar(max)",
+                oldNullable: true);
         }
     }
 }

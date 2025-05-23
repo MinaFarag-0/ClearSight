@@ -1,12 +1,7 @@
-﻿using ClearSight.Core.Mosels;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
+﻿using ClearSight.Core.Models;
+using ClearSight.Core.Mosels;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ClearSight.Infrastructure.Context
 {
@@ -54,7 +49,14 @@ namespace ClearSight.Infrastructure.Context
                     .HasConversion<byte>();
             }
         }
-
+        public class AdminConfigrations : IEntityTypeConfiguration<Admin>
+        {
+            public void Configure(EntityTypeBuilder<Admin> builder)
+            {
+                builder.HasOne(x => x.User).WithOne()
+                    .HasForeignKey<Admin>(d => d.AdminId);
+            }
+        }
         public class PatientHistoryConfigrations : IEntityTypeConfiguration<PatientHistory>
         {
             public void Configure(EntityTypeBuilder<PatientHistory> builder)
@@ -85,4 +87,4 @@ namespace ClearSight.Infrastructure.Context
     }
 }
 
-    
+

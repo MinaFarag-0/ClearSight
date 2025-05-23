@@ -3,6 +3,7 @@ using ClearSight.Core.Dtos.BusnessDtos;
 using ClearSight.Core.Enums;
 using ClearSight.Core.Interfaces;
 using ClearSight.Core.Interfaces.Services;
+using ClearSight.Core.Models;
 using ClearSight.Core.Mosels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -110,7 +111,7 @@ namespace ClearSight.Infrastructure.Implementations.Services
         }
         public async Task<IEnumerable<DoctorProfileDto>> GetDoctorsDtosAsync(int pageNumber = 1, int pageSize = 5)
         {
-            var doctors = await _unitOfWork.Doctors.GetAllWithIncludesAsync((pageNumber - 1) * pageSize, pageSize, x => x.User, x => x.User.PhoneNumbers);
+            var doctors = await _unitOfWork.Doctors.GetAllWithIncludesAsync(x => x.Status == VerificationStatus.Approved, (pageNumber - 1) * pageSize, pageSize, x => x.User, x => x.User.PhoneNumbers);
             var doctorDto = _mapper.Map<IEnumerable<DoctorProfileDto>>(doctors);
             return doctorDto;
         }
@@ -122,7 +123,7 @@ namespace ClearSight.Infrastructure.Implementations.Services
         }
         public async Task<int> GetDoctorsCountAsync()
         {
-            var doctorsCount = await _unitOfWork.Doctors.CountAsync();
+            var doctorsCount = await _unitOfWork.Doctors.CountAsync(x => x.Status == VerificationStatus.Approved);
             return doctorsCount;
         }
         public async Task<int> GetDoctorsCountAsync(string patientId)

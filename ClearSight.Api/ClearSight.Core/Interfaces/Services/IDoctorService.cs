@@ -1,11 +1,7 @@
 ﻿using ClearSight.Core.Dtos.BusnessDtos;
+using ClearSight.Core.Models;
 using ClearSight.Core.Mosels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace ClearSight.Core.Interfaces.Services
 {
@@ -22,5 +18,6 @@ namespace ClearSight.Core.Interfaces.Services
         Task<bool> IsAuthenticated(string doctorId, string patientId);
         Task<int> GetPatientHistoriesCountAsync(string patientId);
         Task<IEnumerable<PatientHistoryDto>> GetPatientHistoryAsync(string id, int skip, int take);
+        Task<ServiceResponse<string>> UploadDocumentAsync(IFormFile doc, string doctorId);
     }
 }

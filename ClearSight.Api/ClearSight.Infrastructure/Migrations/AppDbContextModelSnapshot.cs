@@ -22,7 +22,17 @@ namespace ClearSight.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("ClearSight.Core.Mosels.Doctor", b =>
+            modelBuilder.Entity("ClearSight.Core.Models.Admin", b =>
+                {
+                    b.Property<string>("AdminId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("AdminId");
+
+                    b.ToTable("Admins");
+                });
+
+            modelBuilder.Entity("ClearSight.Core.Models.Doctor", b =>
                 {
                     b.Property<string>("DoctorId")
                         .HasColumnType("nvarchar(450)");
@@ -41,6 +51,12 @@ namespace ClearSight.Infrastructure.Migrations
 
                     b.Property<byte>("DaysOff")
                         .HasColumnType("tinyint");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UploadedDocumentPath")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("DoctorId");
 
@@ -376,11 +392,22 @@ namespace ClearSight.Infrastructure.Migrations
                     b.ToTable("UserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("ClearSight.Core.Mosels.Doctor", b =>
+            modelBuilder.Entity("ClearSight.Core.Models.Admin", b =>
                 {
                     b.HasOne("ClearSight.Core.Mosels.User", "User")
                         .WithOne()
-                        .HasForeignKey("ClearSight.Core.Mosels.Doctor", "DoctorId")
+                        .HasForeignKey("ClearSight.Core.Models.Admin", "AdminId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ClearSight.Core.Models.Doctor", b =>
+                {
+                    b.HasOne("ClearSight.Core.Mosels.User", "User")
+                        .WithOne()
+                        .HasForeignKey("ClearSight.Core.Models.Doctor", "DoctorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -400,7 +427,7 @@ namespace ClearSight.Infrastructure.Migrations
 
             modelBuilder.Entity("ClearSight.Core.Mosels.PatientDoctorAccess", b =>
                 {
-                    b.HasOne("ClearSight.Core.Mosels.Doctor", "Doctor")
+                    b.HasOne("ClearSight.Core.Models.Doctor", "Doctor")
                         .WithMany("PatientDoctorAccess")
                         .HasForeignKey("DoctorId")
                         .OnDelete(DeleteBehavior.NoAction)
@@ -419,7 +446,7 @@ namespace ClearSight.Infrastructure.Migrations
 
             modelBuilder.Entity("ClearSight.Core.Mosels.PatientHistory", b =>
                 {
-                    b.HasOne("ClearSight.Core.Mosels.Doctor", "Doctor")
+                    b.HasOne("ClearSight.Core.Models.Doctor", "Doctor")
                         .WithMany("PatientHistories")
                         .HasForeignKey("DoctorId")
                         .OnDelete(DeleteBehavior.NoAction);
@@ -544,7 +571,7 @@ namespace ClearSight.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ClearSight.Core.Mosels.Doctor", b =>
+            modelBuilder.Entity("ClearSight.Core.Models.Doctor", b =>
                 {
                     b.Navigation("PatientDoctorAccess");
 

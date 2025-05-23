@@ -38,4 +38,11 @@
     <Folder Include="logs\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="wwwroot\AccountVerified.html">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

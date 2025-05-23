@@ -4,7 +4,9 @@ using ClearSight.Core.Enums;
 using ClearSight.Core.Helpers;
 using ClearSight.Core.Interfaces;
 using ClearSight.Core.Interfaces.Services;
+using ClearSight.Core.Models;
 using ClearSight.Core.Mosels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using System.Text.RegularExpressions;
 
@@ -82,6 +84,29 @@ namespace ClearSight.Infrastructure.Implementations.Services
         {
             var doctorsCount = await _unitOfWork.PatientHistories.CountAsync(x => x.PatientId == patientId);
             return doctorsCount;
+        }
+        public async Task<ServiceResponse<string>> UploadDocumentAsync(IFormFile doc, string doctorId)
+        {
+            var doctor = await _unitOfWork.Doctors.GetByIdAsync(doctorId);
+            var url = await _cloudinaryService.UploadImageAsync(doc, CloudFolder.UsersProfile);
+
+            if (doctor == null || url == null)
+            {
+                return new ServiceResponse<string>
+                {
+                    IsSuccess = true,
+                    Response = "Error While Handle Request"
+                };
+            }
+
+            doctor.UploadedDocumentPath = url;
+            await _unitOfWork.Doctors.Update(doctor);
+            await _unitOfWork.SaveChangesAsync();
+            return new ServiceResponse<string>
+            {
+                IsSuccess = true,
+                Response = "Your Account Is Under Activation If not Activated in 24h Please Call Us"
+            };
         }
         public async Task<IEnumerable<PatientHistoryDto>> GetPatientHistoryAsync(string id, int skip, int take)
         {

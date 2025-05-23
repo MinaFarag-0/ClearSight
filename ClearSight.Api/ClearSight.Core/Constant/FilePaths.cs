@@ -8,5 +8,7 @@
         public static string ResetPassword = $"{Directory.GetCurrentDirectory()}\\wwwroot\\ResetPassword.html";
         public static string ResetPasswordCode = $"{Directory.GetCurrentDirectory()}\\wwwroot\\ResetPasswordCode.html";
         public static string ResetPasswordSuccess = $"{Directory.GetCurrentDirectory()}\\wwwroot\\ResetPasswordSuccess.html";
+        public static string AccountVerified = $"{Directory.GetCurrentDirectory()}\\wwwroot\\AccountVerified.html";
+        public static string AccountRejected = $"{Directory.GetCurrentDirectory()}\\wwwroot\\AccountRejected.html";
     }
 }

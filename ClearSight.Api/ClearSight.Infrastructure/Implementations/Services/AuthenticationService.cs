@@ -1,6 +1,7 @@
 ﻿using ClearSight.Core.Dtos.AuthenticationDtos;
 using ClearSight.Core.Helpers;
 using ClearSight.Core.Mosels;
+using ClearSight.Infrastructure.Context;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -16,15 +17,17 @@ namespace ClearSight.Infrastructure.Implementations.Services
     public class AuthenticationService
     {
         private readonly UserManager<User> _userManager;
+        private readonly AppDbContext _context;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly JWT _jwt;
 
 
-        public AuthenticationService(UserManager<User> userManager, RoleManager<IdentityRole> roleManager, IOptions<JWT> jwt)
+        public AuthenticationService(UserManager<User> userManager, RoleManager<IdentityRole> roleManager, IOptions<JWT> jwt, AppDbContext context)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _jwt = jwt.Value;
+            _context = context;
         }
 
         public async Task<RegistrationModel> RegisterUserAsync(RegisterModel model)
@@ -47,7 +50,7 @@ namespace ClearSight.Infrastructure.Implementations.Services
 
             var user = new User
             {
-                FullName =model.FullName,
+                FullName = model.FullName,
                 UserName = UserName,
                 Email = model.Email,
                 ProfileImagePath = "http://res.cloudinary.com/dxpkckl5t/image/upload/v1737133446/temp/crhf7yb1o7bl71har1bb.png"
@@ -122,8 +125,8 @@ namespace ClearSight.Infrastructure.Implementations.Services
 
             return AuthenticationModel;
         }
-       
-      
+
+
         public async Task<string> GenerateEmailConfirmationTokenAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -148,13 +151,23 @@ namespace ClearSight.Infrastructure.Implementations.Services
         public async Task<JwtSecurityToken> CreateJwtToken(User user)
         {
             var userClaims = await _userManager.GetClaimsAsync(user);
+
+            if (await _userManager.IsInRoleAsync(user, "Doctor"))
+            {
+                var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.DoctorId == user.Id);
+                if (doctor != null)
+                {
+                    userClaims.Add(new Claim("VerificationStatus", doctor.Status.ToString()));
+                }
+            }
+
             var roles = await _userManager.GetRolesAsync(user);
             var roleClaims = new List<Claim>();
 
             foreach (var role in roles)
                 roleClaims.Add(new Claim("roles", role));
 
-            var securityStamp = await _userManager.GetSecurityStampAsync(user); 
+            var securityStamp = await _userManager.GetSecurityStampAsync(user);
 
             var claims = new[]
             {
@@ -162,11 +175,12 @@ namespace ClearSight.Infrastructure.Implementations.Services
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, roles[0]),
-                new Claim("SecurityStamp", securityStamp), 
+                new Claim("SecurityStamp", securityStamp),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             }
             .Union(userClaims)
             .Union(roleClaims);
+
 
             var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Key));
             var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);

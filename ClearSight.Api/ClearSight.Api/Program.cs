@@ -1,3 +1,5 @@
+using ClearSight.Api.CustomMiddelWare;
+using ClearSight.Core.CustomPolicy;
 using ClearSight.Core.Dtos.ApiResponse;
 using ClearSight.Core.Helpers;
 using ClearSight.Core.Interfaces;
@@ -5,11 +7,13 @@ using ClearSight.Core.Interfaces.Repository;
 using ClearSight.Core.Interfaces.Services;
 using ClearSight.Core.Mosels;
 using ClearSight.Infrastructure.Context;
+using ClearSight.Infrastructure.Implementations;
 using ClearSight.Infrastructure.Implementations.Middelwares;
 using ClearSight.Infrastructure.Implementations.Repositories;
 using ClearSight.Infrastructure.Implementations.Services;
 using ClearSight.Infrastructure.Implementations.UnitOfWork;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -70,6 +74,7 @@ builder.Services.AddScoped<IDoctorService, DoctorService>();
 builder.Services.AddScoped<IDoctorReposatory, DoctorReposatory>();
 builder.Services.AddScoped<IPatientReposatory, PatientReposatory>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
 
 builder.Services.Configure<JWT>(builder.Configuration.GetSection("JWT"));
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
@@ -161,12 +166,8 @@ builder.Services.AddAuthentication(options =>
             {
                 if (!context.Response.HasStarted)
                 {
-                    //var response = new ApiErrorResponse
-                    //{
-                    //    StatusCode = 401,
-                    //    err_message = "Unauthorized: Please provide a valid token."
-                    //};
-                    var response = ApiResponse<string>.FailureResponse("Unauthorized: Please provide a valid token.");
+                    var response = ApiResponse<string>.FailureResponse("Unauthorized: Please provide a valid token."
+                        , System.Net.HttpStatusCode.Unauthorized);
 
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     context.Response.ContentType = "application/json";
@@ -200,7 +201,9 @@ builder.Services.AddAuthentication(options =>
                 //    StatusCode = 403,
                 //    err_message = "You do not have permission to access this resource."
                 //};
-                var response = ApiResponse<string>.FailureResponse("You do not have permission to access this resource.");
+                var response = ApiResponse<string>.FailureResponse(
+                                             "You do not have permission to access this resource.",
+                                             System.Net.HttpStatusCode.Forbidden);
 
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 context.Response.ContentType = "application/json";
@@ -216,6 +219,18 @@ builder.Services.AddAuthentication(options =>
     })
     .AddCookie()
 ;
+
+#endregion
+
+#region Authorization
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("DoctorApproved", policy =>
+        policy.RequireClaim("VerificationStatus", "Approved")
+              .RequireRole("Doctor"));
+});
+
+builder.Services.AddSingleton<IAuthorizationHandler, DoctorApprovedHandler>();
 
 #endregion
 
@@ -257,6 +272,7 @@ var app = builder.Build();
 #region SeedingRoles
 using var scope = app.Services.CreateScope();
 await SeedingRoles.Initialize(scope.ServiceProvider);
+await DbSeeder.SeedAdminsAsync(app.Services);
 #endregion
 
 app.UseSwagger();

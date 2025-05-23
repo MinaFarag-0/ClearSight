@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Reflection.Emit;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using ClearSight.Core.Models;
 using ClearSight.Core.Mosels;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace ClearSight.Infrastructure.Context
 {
@@ -18,6 +12,7 @@ namespace ClearSight.Infrastructure.Context
         #region DbSets
         public DbSet<Patient> Patients { get; set; }
         public DbSet<Doctor> Doctors { get; set; }
+        public DbSet<Admin> Admins { get; set; }
         public DbSet<PatientHistory> PatientHistories { get; set; }
         public DbSet<UserCode> UserCodes { get; set; }
         public DbSet<PatientDoctorAccess> PatientDoctorAccess { get; set; }
@@ -33,8 +28,8 @@ namespace ClearSight.Infrastructure.Context
             base.OnModelCreating(builder);
             builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-            builder.Entity<User>().ToTable("Users");  
-            builder.Entity<IdentityRole>().ToTable("Roles");    
+            builder.Entity<User>().ToTable("Users");
+            builder.Entity<IdentityRole>().ToTable("Roles");
             builder.Entity<IdentityUserRole<string>>().ToTable("UserRoles");
             builder.Entity<IdentityUserClaim<string>>().ToTable("UserClaims");
             builder.Entity<IdentityUserLogin<string>>().ToTable("UserLogins");
