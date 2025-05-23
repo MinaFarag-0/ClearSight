@@ -100,6 +100,7 @@ namespace ClearSight.Infrastructure.Implementations.Services
             }
 
             doctor.UploadedDocumentPath = url;
+            doctor.Status = VerificationStatus.Pending;
             await _unitOfWork.Doctors.Update(doctor);
             await _unitOfWork.SaveChangesAsync();
             return new ServiceResponse<string>

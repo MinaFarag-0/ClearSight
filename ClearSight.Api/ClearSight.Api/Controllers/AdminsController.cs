@@ -26,7 +26,7 @@ namespace ClearSight.Api.Controllers
         /// </summary>
         /// <returns>Returns Doctors Activate Data.</returns>
         /// <response code="200">Doctors Activate Data.</response>
-        [ProducesResponseType(typeof(ApiResponse<DoctorActivateProfile>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<DoctorActivateProfile>>), 200)]
         [HttpGet("ActivateDoctorsList")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ActivateDoctorsListAsync(int pageNumber, int pageSize)
@@ -36,7 +36,7 @@ namespace ClearSight.Api.Controllers
 
             var result = new PagedResult<DoctorActivateProfile>
             {
-                Items = doctors.ToList(),
+                Items = doctors,
                 TotalCount = totalCount,
                 PageSize = pageSize,
                 CurrentPage = pageNumber

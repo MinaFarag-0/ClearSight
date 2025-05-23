@@ -71,6 +71,7 @@ builder.Services.AddScoped<ActivateUserAccountsServices>();
 builder.Services.AddScoped<GenerateCodeServices>();
 builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<IDoctorService, DoctorService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IDoctorReposatory, DoctorReposatory>();
 builder.Services.AddScoped<IPatientReposatory, PatientReposatory>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
