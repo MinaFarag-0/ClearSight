@@ -50,7 +50,7 @@ namespace ClearSight.Infrastructure.Implementations.Services
         public async Task<ServiceResponse<string>> ActivateDoctorAsync(string doctorId)
         {
             var doctor = await _unitOfWork.Doctors.GetByIdAsync(doctorId);
-            if (doctor == null)
+            if (doctor == null || doctor?.Status == VerificationStatus.Approved)
             {
                 return new ServiceResponse<string>()
                 {

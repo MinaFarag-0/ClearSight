@@ -29,7 +29,7 @@ namespace ClearSight.Api.Controllers
         [ProducesResponseType(typeof(ApiResponse<PagedResult<DoctorActivateProfile>>), 200)]
         [HttpGet("ActivateDoctorsList")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> ActivateDoctorsListAsync(int pageNumber, int pageSize)
+        public async Task<IActionResult> ActivateDoctorsListAsync(int pageNumber = 1, int pageSize = 5)
         {
             int totalCount = await _adminService.GetDoctorsActivateProfilesCountAsync();
             var doctors = await _adminService.GetDoctorsActivateProfilesAsync(pageNumber, pageSize);
