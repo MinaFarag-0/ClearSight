@@ -17,7 +17,7 @@ namespace ClearSight.Infrastructure.Context
         public DbSet<UserCode> UserCodes { get; set; }
         public DbSet<PatientDoctorAccess> PatientDoctorAccess { get; set; }
         public DbSet<UserPhoneNumber> UserPhoneNumbers { get; set; }
-
+        public DbSet<Feedback> Feedbacks { get; set; }
         #endregion
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)

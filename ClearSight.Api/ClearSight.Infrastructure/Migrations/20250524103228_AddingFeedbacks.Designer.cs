@@ -4,6 +4,7 @@ using ClearSight.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ClearSight.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250524103228_AddingFeedbacks")]
+    partial class AddingFeedbacks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -78,14 +81,7 @@ namespace ClearSight.Infrastructure.Migrations
                     b.Property<DateTime>("SubmittedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
 
                     b.ToTable("Feedbacks");
                 });
@@ -435,17 +431,6 @@ namespace ClearSight.Infrastructure.Migrations
                     b.HasOne("ClearSight.Core.Mosels.User", "User")
                         .WithOne()
                         .HasForeignKey("ClearSight.Core.Models.Doctor", "DoctorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ClearSight.Core.Models.Feedback", b =>
-                {
-                    b.HasOne("ClearSight.Core.Mosels.User", "User")
-                        .WithOne()
-                        .HasForeignKey("ClearSight.Core.Models.Feedback", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

@@ -57,6 +57,15 @@ namespace ClearSight.Infrastructure.Context
                     .HasForeignKey<Admin>(d => d.AdminId);
             }
         }
+        public class FeedbackConfigrations : IEntityTypeConfiguration<Feedback>
+        {
+            public void Configure(EntityTypeBuilder<Feedback> builder)
+            {
+                builder.HasOne(x => x.User)
+                    .WithOne()
+                    .HasForeignKey<Feedback>(d => d.UserId);
+            }
+        }
         public class PatientHistoryConfigrations : IEntityTypeConfiguration<PatientHistory>
         {
             public void Configure(EntityTypeBuilder<PatientHistory> builder)
