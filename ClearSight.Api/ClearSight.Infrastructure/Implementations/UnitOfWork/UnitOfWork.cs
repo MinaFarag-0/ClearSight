@@ -1,5 +1,6 @@
 ﻿using ClearSight.Core.Interfaces;
 using ClearSight.Core.Interfaces.Repository;
+using ClearSight.Core.Models;
 using ClearSight.Core.Mosels;
 using ClearSight.Infrastructure.Context;
 using ClearSight.Infrastructure.Implementations.Repositories;
@@ -13,6 +14,7 @@ namespace ClearSight.Infrastructure.Implementations.UnitOfWork
         public IPatientReposatory Patients { get; private set; }
         public IBaseRepository<PatientDoctorAccess> PatientDoctorAccess { get; private set; }
         public IBaseRepository<PatientHistory> PatientHistories { get; private set; }
+        public IBaseRepository<Feedback> Feedbacks { get; private set; }
 
         public UnitOfWork(AppDbContext context)
         {
@@ -22,6 +24,7 @@ namespace ClearSight.Infrastructure.Implementations.UnitOfWork
             Doctors = new DoctorReposatory(_context);
             PatientDoctorAccess = new BaseRepository<PatientDoctorAccess>(_context);
             PatientHistories = new BaseRepository<PatientHistory>(_context);
+            Feedbacks = new BaseRepository<Feedback>(_context);
         }
 
         public async Task<int> SaveChangesAsync()

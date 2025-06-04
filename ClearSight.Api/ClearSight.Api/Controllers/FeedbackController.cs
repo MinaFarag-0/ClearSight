@@ -1,8 +1,8 @@
 ﻿using ClearSight.Core.Dtos.ApiResponse;
 using ClearSight.Core.Dtos.BusnessDtos;
+using ClearSight.Core.Interfaces.Services;
 using ClearSight.Core.Models;
 using ClearSight.Core.Mosels;
-using ClearSight.Infrastructure.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,19 +12,28 @@ namespace ClearSight.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
     public class FeedbackController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IFeedbackService _feedbackService;
         private readonly UserManager<User> _userManager;
 
-        public FeedbackController(AppDbContext context, UserManager<User> userManager)
+        public FeedbackController(UserManager<User> userManager, IFeedbackService feedbackService)
         {
-            _context = context;
             _userManager = userManager;
+            _feedbackService = feedbackService;
         }
 
+        /// <summary>
+        /// Submit New Feedback.
+        /// </summary>
+        /// <param name="feedback"> number of feedbacks to display </param>
+        /// <returns>Returns Submit Feedback Result.</returns>
+        /// <response code="200">feedback added successfully.</response>
+        [ProducesResponseType(typeof(ApiResponse<string>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 401)]
         [HttpPost("SubmitFeedback")]
-        [Authorize(Roles = "Doctor,Patient")]
+        [Authorize(Policy = "WriteFeedback")]
         public async Task<IActionResult> SubmitFeedback([FromBody] FeedbackDto feedback)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -36,28 +45,25 @@ namespace ClearSight.Api.Controllers
                 User = user
             };
 
-            _context.Feedbacks.Add(feedBack);
-            await _context.SaveChangesAsync();
+            await _feedbackService.AddFeedbackAsync(feedBack);
 
             return Ok(ApiResponse<string>.SuccessResponse("Added Feedback Successfully"));
         }
 
-        [HttpGet("GetRecentFeedBacks")]
-        public IActionResult GetRecentFeedBacks(int count = 3)
-        {
-            var feedbacks2 = _context.Feedbacks.Select(f => new FeedbackDto2
-            {
-                Content = f.Message,
-                SubmittedAt = f.SubmittedAt,
-                UserId = f.UserId,
-                UserName = f.User.FullName,
-                UserImage = f.User.ProfileImagePath,
-                UserRole = _userManager.IsInRoleAsync(f.User, "Doctor").Result ? "Doctor" : "Patient"
-            }).ToList();
 
-            var feedbacks = feedbacks2.TakeLast(count).ToList();
-            return Ok(ApiResponse<List<FeedbackDto2>>.SuccessResponse(feedbacks));
+        /// <summary>
+        /// Get Recent Feedbacks By Count.
+        /// </summary>
+        /// <returns>Returns Recent Feedbacks Data.</returns>
+        /// <response code="200">List Of recent feedbacks.</response>
+        [ProducesResponseType(typeof(ApiResponse<List<FeedbackResponseDto>>), 200)]
+        [HttpGet("GetRecentFeedBacks")]
+        public async Task<IActionResult> GetRecentFeedBacks(int count = 3)
+        {
+            var feedbacks = await _feedbackService.GetRecentFeedBacks(count);
+            return Ok(ApiResponse<List<FeedbackResponseDto>>.SuccessResponse(feedbacks));
         }
+
     }
 
 }

@@ -1,4 +1,4 @@
-using ClearSight.Api.CustomMiddelWare;
+using ClearSight.Api.CustomMiddleware;
 using ClearSight.Core.CustomPolicy;
 using ClearSight.Core.Dtos.ApiResponse;
 using ClearSight.Core.Helpers;
@@ -7,7 +7,6 @@ using ClearSight.Core.Interfaces.Repository;
 using ClearSight.Core.Interfaces.Services;
 using ClearSight.Core.Mosels;
 using ClearSight.Infrastructure.Context;
-using ClearSight.Infrastructure.Implementations;
 using ClearSight.Infrastructure.Implementations.Middelwares;
 using ClearSight.Infrastructure.Implementations.Repositories;
 using ClearSight.Infrastructure.Implementations.Services;
@@ -21,6 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using System.Net;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
@@ -72,6 +72,7 @@ builder.Services.AddScoped<GenerateCodeServices>();
 builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<IDoctorService, DoctorService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<IDoctorReposatory, DoctorReposatory>();
 builder.Services.AddScoped<IPatientReposatory, PatientReposatory>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -117,7 +118,7 @@ builder.Services.AddRateLimiter(options =>
             partitionKey: httpContext.Request.Headers.Host.ToString(),
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 15,
+                PermitLimit = 20,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0,
             });
@@ -127,12 +128,9 @@ builder.Services.AddRateLimiter(options =>
         context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
         context.HttpContext.Response.ContentType = "application/json";
 
-        //var response = new ApiErrorResponse
-        //{
-        //    StatusCode = 429,
-        //    err_message = "Too many requests. Please try again later."
-        //};
-        var response = ApiResponse<string>.FailureResponse("Too many requests. Please try again later.");
+        var response = ApiResponse<string>.FailureResponse(
+                    "Too many requests. Please try again later.",
+                    HttpStatusCode.TooManyRequests);
 
         await context.HttpContext.Response.WriteAsync(JsonSerializer.Serialize(response), cancellationToken);
     };
@@ -229,6 +227,15 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("DoctorApproved", policy =>
         policy.RequireClaim("VerificationStatus", "Approved")
               .RequireRole("Doctor"));
+
+    options.AddPolicy("WriteFeedback", policy =>
+        policy.RequireAssertion(context =>
+            context.User.IsInRole("Patient") ||
+            (context.User.IsInRole("Doctor") &&
+             context.User.HasClaim(c => c.Type == "VerificationStatus" && c.Value == "Approved"))
+        ));
+
+
 });
 
 builder.Services.AddSingleton<IAuthorizationHandler, DoctorApprovedHandler>();
@@ -271,9 +278,9 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 #region SeedingRoles
-using var scope = app.Services.CreateScope();
-await SeedingRoles.Initialize(scope.ServiceProvider);
-await DbSeeder.SeedAdminsAsync(app.Services);
+//using var scope = app.Services.CreateScope();
+//await SeedingRoles.Initialize(scope.ServiceProvider);
+//await DbSeeder.SeedAdminsAsync(app.Services);
 #endregion
 
 app.UseSwagger();
@@ -282,11 +289,13 @@ app.UseSwaggerUI();
 
 app.UseSerilogRequestLogging();
 
-app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 app.UseRouting();
 app.UseStatusCodePages();
 app.UseStaticFiles();
 app.UseHttpsRedirection();
+
+app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+
 app.UseAuthentication();
 app.UseAuthorization();
 

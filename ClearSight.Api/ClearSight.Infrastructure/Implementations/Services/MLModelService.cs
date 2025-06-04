@@ -22,17 +22,17 @@ namespace ClearSight.Infrastructure.Implementations.Services
 
         public async Task<MLModelDto> Predict(IFormFile file)
         {
-            return new MLModelDto
-            {
-                Result = new MLModelResult
-                {
-                    Prediction = "Diabetic Retinopathy",
-                    Confidence = 90.5,
-                },
-                IsSuccess = true,
-                ArabicName = _configuration["DiseasesMSG:Diabetic Retinopathy:0"],
-                DiseaseMsg = _configuration["DiseasesMSG:Diabetic Retinopathy:1"],
-            };
+            //return new MLModelDto
+            //{
+            //    Result = new MLModelResult
+            //    {
+            //        Prediction = "Diabetic Retinopathy",
+            //        Confidence = 90.5,
+            //    },
+            //    IsSuccess = true,
+            //    ArabicName = _configuration["DiseasesMSG:Diabetic Retinopathy:0"],
+            //    DiseaseMsg = _configuration["DiseasesMSG:Diabetic Retinopathy:1"],
+            //};
             using var form = new MultipartFormDataContent();
             var fileContent = new StreamContent(file.OpenReadStream());
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);

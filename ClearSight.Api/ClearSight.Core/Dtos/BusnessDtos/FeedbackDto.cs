@@ -6,10 +6,10 @@ namespace ClearSight.Core.Dtos.BusnessDtos
     {
         [Required(ErrorMessage = "Message is required.")]
         [StringLength(1000, ErrorMessage = "Message must be less than 1000 characters.")]
-        [RegularExpression(@"^[a-zA-Z0-9\s,.!?]+$", ErrorMessage = "Only alphanumeric and punctuation allowed.")]
+        [RegularExpression(@"^[a-zA-Z0-9\s,'.!?]+$", ErrorMessage = "Only alphanumeric and punctuation allowed.")]
         public string Content { get; set; }
     }
-    public class FeedbackDto2
+    public class FeedbackResponseDto
     {
         public string Content { get; set; }
         public string UserId { get; set; }

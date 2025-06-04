@@ -262,11 +262,11 @@ namespace ClearSight.Api.Controllers
         [ProducesResponseType(typeof(ApiResponse<string>), 400)]
         [Authorize(Roles = "Doctor")]
         [HttpPost("ActivateAccount")]
-        public async Task<IActionResult> ActivateAccount(IFormFile doc)
+        public async Task<IActionResult> ActivateAccount(ActivateDoctorAccountDto dto)
         {
             var doctorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var res = await _docotrServices.UploadDocumentAsync(doc, doctorId);
+            var res = await _docotrServices.UploadDocumentAsync(dto.Document, doctorId);
 
             if (res.IsSuccess)
             {

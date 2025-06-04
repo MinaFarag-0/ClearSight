@@ -103,5 +103,15 @@ namespace ClearSight.Infrastructure.Implementations.Repositories
             return await query.SingleOrDefaultAsync(criteria);
         }
 
+        public async Task<IEnumerable<T>> GetAllWithIncludesAsync(params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = _context.Set<T>();
+
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+            return query.ToList();
+        }
     }
 }
