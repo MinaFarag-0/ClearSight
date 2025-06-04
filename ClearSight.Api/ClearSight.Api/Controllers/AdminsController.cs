@@ -5,11 +5,13 @@ using ClearSight.Core.Interfaces.Services;
 using ClearSight.Infrastructure.Implementations.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace ClearSight.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [ProducesResponseType(typeof(ApiResponse<string>), 401)]
     public class AdminsController : ControllerBase
     {
         private readonly IAdminService _adminService;
@@ -88,7 +90,7 @@ namespace ClearSight.Api.Controllers
                 catch (Exception ex)
                 {
                     return StatusCode(StatusCodes.Status500InternalServerError,
-                                        ApiResponse<string>.FailureResponse(ex.Message));
+                                        ApiResponse<string>.FailureResponse(ex.Message, HttpStatusCode.InternalServerError));
                 }
                 return Ok(ApiResponse<string>.SuccessResponse(result.Response));
             }
@@ -125,7 +127,7 @@ namespace ClearSight.Api.Controllers
                 catch (Exception ex)
                 {
                     return StatusCode(StatusCodes.Status500InternalServerError,
-                                        ApiResponse<string>.FailureResponse(ex.Message));
+                                        ApiResponse<string>.FailureResponse(ex.Message, HttpStatusCode.InternalServerError));
                 }
                 return Ok(ApiResponse<string>.SuccessResponse(result.Response));
             }

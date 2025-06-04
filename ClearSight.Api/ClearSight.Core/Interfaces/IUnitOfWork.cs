@@ -1,10 +1,6 @@
 ﻿using ClearSight.Core.Interfaces.Repository;
+using ClearSight.Core.Models;
 using ClearSight.Core.Mosels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ClearSight.Core.Interfaces
 {
@@ -14,6 +10,7 @@ namespace ClearSight.Core.Interfaces
         IDoctorReposatory Doctors { get; }
         IBaseRepository<PatientDoctorAccess> PatientDoctorAccess { get; }
         IBaseRepository<PatientHistory> PatientHistories { get; }
+        IBaseRepository<Feedback> Feedbacks { get; }
 
         Task<int> SaveChangesAsync();
     }
