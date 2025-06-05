@@ -6,6 +6,7 @@ using ClearSight.Core.Mosels;
 using ClearSight.Infrastructure.Implementations.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using System.Security.Claims;
 
 namespace ClearSight.Api.Controllers
@@ -156,7 +157,7 @@ namespace ClearSight.Api.Controllers
         [ProducesResponseType(typeof(ApiResponse<string>), 400)]
         [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         [HttpPost("Scan/{patientId:guid}")]
-        [Authorize(Roles = "Doctor")]
+        [Authorize(Policy = "DoctorApproved")]
         public async Task<IActionResult> Scan(string patientId, ScanDto dto)
         {
             if (dto.ScanImage == null || dto.ScanImage.Length == 0)
@@ -178,7 +179,7 @@ namespace ClearSight.Api.Controllers
                 var prediction = await _mlModelService.Predict(dto.ScanImage);
 
                 if (!prediction.IsSuccess)
-                    return StatusCode(500, ApiResponse<string>.FailureResponse(prediction?.Result?.Prediction ?? "Error"));
+                    return StatusCode(500, ApiResponse<string>.FailureResponse(prediction?.Result?.Prediction ?? "Error", System.Net.HttpStatusCode.InternalServerError));
 
 
                 var Check = new PatientHistory()
@@ -202,7 +203,7 @@ namespace ClearSight.Api.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An Error Occured While Handle New Scan For Doctor");
-                return StatusCode(500, ApiResponse<string>.FailureResponse(ex.Message));
+                return StatusCode(500, ApiResponse<string>.FailureResponse(ex.Message, HttpStatusCode.InternalServerError));
             }
 
         }
@@ -219,7 +220,7 @@ namespace ClearSight.Api.Controllers
         [ProducesResponseType(typeof(ApiResponse<string>), 400)]
         [ProducesResponseType(typeof(ApiResponse<string>), 403)]
         [HttpGet("GetPatientHistory/{patientId:guid}")]
-        [Authorize(Roles = "Doctor")]
+        [Authorize(Policy = "DoctorApproved")]
         public async Task<IActionResult> GetPatientHistory(string patientId, int pageNumber = 1, int pageSize = 5)
         {
             var doctorId = User.FindFirstValue(ClaimTypes.NameIdentifier);

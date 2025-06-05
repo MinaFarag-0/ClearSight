@@ -13,22 +13,6 @@ namespace ClearSight.Api.CustomMiddleware
         public async Task HandleAsync(RequestDelegate next, HttpContext context,
                                       AuthorizationPolicy policy, PolicyAuthorizationResult authorizeResult)
         {
-            //if (authorizeResult.Forbidden)
-            //{
-            //    var verificationStatus = context.User.FindFirst("VerificationStatus")?.Value;
-            //    var role = context.User.FindFirst(ClaimTypes.Role)?.Value;
-
-            //    if (role == "Doctor" && verificationStatus != "Approved")
-            //    {
-            //        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            //        context.Response.ContentType = "application/json";
-
-            //        var response = ApiResponse<string>.FailureResponse("You have not verified your account. Please wait for approval.");
-
-            //        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
-            //        return;
-            //    }
-            //}
             if (authorizeResult.Forbidden)
             {
                 var verificationStatus = context.User.FindFirst("VerificationStatus")?.Value;
