@@ -7,6 +7,7 @@ using ClearSight.Core.Interfaces.Repository;
 using ClearSight.Core.Interfaces.Services;
 using ClearSight.Core.Mosels;
 using ClearSight.Infrastructure.Context;
+using ClearSight.Infrastructure.Implementations;
 using ClearSight.Infrastructure.Implementations.Middelwares;
 using ClearSight.Infrastructure.Implementations.Repositories;
 using ClearSight.Infrastructure.Implementations.Services;
@@ -277,10 +278,10 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-#region SeedingRoles
-//using var scope = app.Services.CreateScope();
-//await SeedingRoles.Initialize(scope.ServiceProvider);
-//await DbSeeder.SeedAdminsAsync(app.Services);
+#region Seeding
+using var scope = app.Services.CreateScope();
+await SeedingRoles.Initialize(scope.ServiceProvider);
+await DbSeeder.SeedAdminsAsync(app.Services);
 #endregion
 
 app.UseSwagger();
