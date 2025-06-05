@@ -254,7 +254,8 @@ namespace ClearSight.Api.Controllers
                 var prediction = await _mlModelService.Predict(scan.ScanImage);
 
                 if (!prediction.IsSuccess)
-                    return StatusCode(500, ApiResponse<string>.FailureResponse(prediction?.Result?.Prediction ?? "Error"));
+                    return StatusCode(500, ApiResponse<string>.FailureResponse(prediction?.Result?.Prediction ?? "Please Try Again Later",
+                        System.Net.HttpStatusCode.InternalServerError));
 
                 var check = new PatientHistory()
                 {
@@ -275,7 +276,7 @@ namespace ClearSight.Api.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Exception while Make new scan");
-                return StatusCode(500, ApiResponse<string>.FailureResponse(ex.Message));
+                return StatusCode(500, ApiResponse<string>.FailureResponse(ex.Message, System.Net.HttpStatusCode.InternalServerError));
             }
 
         }

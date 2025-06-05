@@ -108,7 +108,7 @@ namespace ClearSight.Api.Controllers
                 _logger.LogError(ex, "Login Error");
                 await _userManager.DeleteAsync(user);
                 return StatusCode(StatusCodes.Status500InternalServerError,
-                                    ApiResponse<string>.FailureResponse(ex.Message));
+                                    ApiResponse<string>.FailureResponse(ex.Message, System.Net.HttpStatusCode.InternalServerError));
             }
             return Ok(ApiResponse<string>.SuccessResponse("Registration Email has send successful Check Your Mail To Confirm Account."));
         }
