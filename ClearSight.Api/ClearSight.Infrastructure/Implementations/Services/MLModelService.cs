@@ -27,7 +27,7 @@ namespace ClearSight.Infrastructure.Implementations.Services
             //    Result = new MLModelResult
             //    {
             //        Prediction = "Diabetic Retinopathy",
-            //        Confidence = 90.5,
+            //        Confidence = 97,
             //    },
             //    IsSuccess = true,
             //    ArabicName = _configuration["DiseasesMSG:Diabetic Retinopathy:0"],
@@ -46,6 +46,7 @@ namespace ClearSight.Infrastructure.Implementations.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonResponse = await response.Content.ReadFromJsonAsync<MLModelResult>();
+                    jsonResponse.Confidence = Math.Round(jsonResponse.Confidence * 100, 2);
                     return new MLModelDto
                     {
                         Result = jsonResponse,
