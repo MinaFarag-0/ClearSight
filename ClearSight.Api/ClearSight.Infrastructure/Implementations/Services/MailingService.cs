@@ -1,13 +1,13 @@
-﻿using MailKit.Security;
-using MimeKit;
+﻿using ClearSight.Core.Helpers;
 using MailKit.Net.Smtp;
-using ClearSight.Core.Helpers;
-using Microsoft.Extensions.Options;
+using MailKit.Security;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
+using MimeKit;
 
 namespace ClearSight.Infrastructure.Implementations.Services
 {
-    public class MailingService 
+    public class MailingService
     {
         private readonly MailSettings _mailSettings;
 
