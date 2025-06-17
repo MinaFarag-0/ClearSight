@@ -291,7 +291,6 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 #region DbSeeding
-//using var scope = app.Services.CreateScope();
 //await DbSeeder.SeedRolesAsync(app.Services);
 //await DbSeeder.SeedAdminsAsync(app.Services);
 #endregion
