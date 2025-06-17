@@ -5,7 +5,7 @@ using ClearSight.Core.Helpers;
 using ClearSight.Core.Interfaces;
 using ClearSight.Core.Interfaces.Repository;
 using ClearSight.Core.Interfaces.Services;
-using ClearSight.Core.Mosels;
+using ClearSight.Core.Models;
 using ClearSight.Infrastructure.Context;
 using ClearSight.Infrastructure.Implementations.Middelwares;
 using ClearSight.Infrastructure.Implementations.Repositories;
@@ -29,17 +29,16 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+#region Logging
 Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
-    .Enrich.FromLogContext()
-    .CreateLogger();
-
+.ReadFrom.Configuration(builder.Configuration)
+.Enrich.FromLogContext()
+.CreateLogger();
 
 builder.Host.UseSerilog();
+#endregion
 
-builder.Services.AddHttpClient();
-builder.Services.AddHttpClient<MLModelService>();
-builder.Services.AddAutoMapper(typeof(MappingProfile));
+#region Controller | XML Doc | ModelState Errors
 
 builder.Services.AddControllers()
     .AddXmlSerializerFormatters()
@@ -52,30 +51,32 @@ builder.Services.AddControllers()
                 .Select(e => e.ErrorMessage)
                 .ToArray();
 
-            //var response = new ModelStateErrorResponse
-            //{
-            //    StatusCode = 400,
-            //    Errors = errors
-            //};
             var response = ApiResponse<string>.FailureResponse(string.Join(',', errors));
 
             return new BadRequestObjectResult(response);
         };
     });
 
+#endregion
+
+builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<MLModelService>();
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 #region CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", builder =>
     {
-        builder.WithOrigins("http://localhost:5173") // e.g., http://localhost:3000
+        builder.WithOrigins("http://localhost:5173")
            .AllowAnyHeader()
            .AllowAnyMethod()
-           .AllowCredentials(); // ?? Needed for cookies
+           .AllowCredentials();
     });
 });
 #endregion
+
+#region MiddlewareLifeScopeRegister
 
 builder.Services.AddOpenApi();
 builder.Services.AddTransient<AuthenticationService>();
@@ -91,10 +92,13 @@ builder.Services.AddScoped<IDoctorReposatory, DoctorReposatory>();
 builder.Services.AddScoped<IPatientReposatory, PatientReposatory>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
+#endregion
 
+#region ConfigurationClassSettings
 builder.Services.Configure<JWT>(builder.Configuration.GetSection("JWT"));
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
+#endregion
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -104,6 +108,7 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(xmlPath);
 });
 
+#region Context | Identity
 
 builder.Services.AddDbContext<AppDbContext>(op => op.UseSqlServer
 (builder.Configuration.GetConnectionString("defaultconnection")));
@@ -116,6 +121,7 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
+#endregion
 
 #region RateLimiting
 builder.Services.AddRateLimiter(options =>
@@ -224,14 +230,7 @@ builder.Services.AddAuthentication(options =>
             }
         };
 
-    })
-    .AddGoogle(options =>
-    {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-    })
-    .AddCookie()
-;
+    }).AddCookie();
 
 #endregion
 
@@ -291,10 +290,10 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-#region Seeding
-// using var scope = app.Services.CreateScope();
-// await SeedingRoles.Initialize(scope.ServiceProvider);
-// await DbSeeder.SeedAdminsAsync(app.Services);
+#region DbSeeding
+//using var scope = app.Services.CreateScope();
+//await DbSeeder.SeedRolesAsync(app.Services);
+//await DbSeeder.SeedAdminsAsync(app.Services);
 #endregion
 
 app.UseSwagger();
@@ -304,17 +303,16 @@ app.UseSwaggerUI();
 app.UseSerilogRequestLogging();
 
 app.UseRouting();
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
 app.UseStatusCodePages();
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 
-//app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 app.UseRateLimiter();
 app.MapControllers();

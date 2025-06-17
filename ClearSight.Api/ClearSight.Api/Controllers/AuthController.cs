@@ -1,7 +1,7 @@
 using ClearSight.Core.Constant;
 using ClearSight.Core.Dtos.ApiResponse;
 using ClearSight.Core.Dtos.AuthenticationDtos;
-using ClearSight.Core.Mosels;
+using ClearSight.Core.Models;
 using ClearSight.Infrastructure.Context;
 using ClearSight.Infrastructure.Implementations.Services;
 using Microsoft.AspNetCore.Authorization;

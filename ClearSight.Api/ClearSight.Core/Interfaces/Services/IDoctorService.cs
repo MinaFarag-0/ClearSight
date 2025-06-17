@@ -1,6 +1,5 @@
 ﻿using ClearSight.Core.Dtos.BusnessDtos;
 using ClearSight.Core.Models;
-using ClearSight.Core.Mosels;
 using Microsoft.AspNetCore.Http;
 
 namespace ClearSight.Core.Interfaces.Services

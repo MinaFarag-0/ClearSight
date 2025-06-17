@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using ClearSight.Core.Dtos.BusnessDtos;
 using ClearSight.Core.Models;
-using ClearSight.Core.Mosels;
 
 namespace ClearSight.Core.Helpers
 {

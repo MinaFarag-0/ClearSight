@@ -1,6 +1,4 @@
-﻿using ClearSight.Core.Mosels;
-
-namespace ClearSight.Core.Models
+﻿namespace ClearSight.Core.Models
 {
     public class Feedback
     {

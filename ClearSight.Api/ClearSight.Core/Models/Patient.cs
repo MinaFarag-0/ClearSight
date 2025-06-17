@@ -1,4 +1,4 @@
-﻿namespace ClearSight.Core.Mosels
+﻿namespace ClearSight.Core.Models
 {
     public class Patient
     {

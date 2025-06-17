@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace ClearSight.Core.Mosels
+namespace ClearSight.Core.Models
 {
     public class User : IdentityUser
     {

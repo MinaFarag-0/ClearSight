@@ -1,5 +1,4 @@
 ﻿using ClearSight.Core.Models;
-using ClearSight.Core.Mosels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

@@ -1,6 +1,5 @@
 ﻿using ClearSight.Core.Interfaces.Repository;
 using ClearSight.Core.Models;
-using ClearSight.Core.Mosels;
 
 namespace ClearSight.Core.Interfaces
 {

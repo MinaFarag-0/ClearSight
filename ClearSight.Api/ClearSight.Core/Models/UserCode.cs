@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ClearSight.Core.Mosels
+﻿namespace ClearSight.Core.Models
 {
     public class UserCode
     {

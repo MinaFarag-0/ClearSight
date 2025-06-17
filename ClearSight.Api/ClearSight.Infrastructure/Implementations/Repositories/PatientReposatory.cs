@@ -1,5 +1,5 @@
 ﻿using ClearSight.Core.Interfaces.Repository;
-using ClearSight.Core.Mosels;
+using ClearSight.Core.Models;
 using ClearSight.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 

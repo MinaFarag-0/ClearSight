@@ -1,44 +1,58 @@
 ﻿using ClearSight.Core.Enums;
 using ClearSight.Core.Models;
-using ClearSight.Core.Mosels;
 using ClearSight.Infrastructure.Context;
 using Microsoft.AspNetCore.Identity;
 
 namespace ClearSight.Infrastructure.Implementations.Services
 {
-    public class ActivateUserAccountsServices(AppDbContext context, UserManager<User> userManager)
+    public class ActivateUserAccountsServices
     {
-        private readonly AppDbContext _context = context;
-        private readonly UserManager<User> _userManager = userManager;
+        private readonly AppDbContext _context;
+        private readonly UserManager<User> _userManager;
+
+        public ActivateUserAccountsServices(AppDbContext context, UserManager<User> userManager)
+        {
+            _context = context;
+            _userManager = userManager;
+        }
 
         public async Task<bool> ActivateUserAccount(User user)
         {
-            var checkUserExsist = _context.Users.Find(user.Id);
-            var userUserADoctor = await _userManager.IsInRoleAsync(user, Roles.Doctor.ToString());
-            if (checkUserExsist != null)
+            var existingUser = await _context.Users.FindAsync(user.Id);
+            if (existingUser == null)
+                return false;
+
+            var isDoctor = await _userManager.IsInRoleAsync(user, Roles.Doctor.ToString());
+
+            if (isDoctor)
             {
-                if (userUserADoctor && _context.Doctors.Find(user.Id) == null)
+                var doctorExists = await _context.Doctors.FindAsync(user.Id);
+                if (doctorExists == null)
                 {
-                    var doctor = new Doctor()
+                    var doctor = new Doctor
                     {
                         User = user,
-                        Status = VerificationStatus.Pending,
+                        Status = VerificationStatus.Pending
                     };
-                    _context.Add(doctor);
-                    _context.SaveChanges();
+                    _context.Doctors.Add(doctor);
+                    await _context.SaveChangesAsync();
                 }
-                if (!userUserADoctor && _context.Patients.Find(user.Id) == null)
+            }
+            else
+            {
+                var patientExists = await _context.Patients.FindAsync(user.Id);
+                if (patientExists == null)
                 {
-                    var patient = new Patient()
+                    var patient = new Patient
                     {
                         User = user
                     };
-                    _context.Add(patient);
-                    _context.SaveChanges();
+                    _context.Patients.Add(patient);
+                    await _context.SaveChangesAsync();
                 }
             }
-            return true;
 
+            return true;
         }
     }
 }

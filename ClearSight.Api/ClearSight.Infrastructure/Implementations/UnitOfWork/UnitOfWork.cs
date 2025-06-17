@@ -1,7 +1,6 @@
 ﻿using ClearSight.Core.Interfaces;
 using ClearSight.Core.Interfaces.Repository;
 using ClearSight.Core.Models;
-using ClearSight.Core.Mosels;
 using ClearSight.Infrastructure.Context;
 using ClearSight.Infrastructure.Implementations.Repositories;
 

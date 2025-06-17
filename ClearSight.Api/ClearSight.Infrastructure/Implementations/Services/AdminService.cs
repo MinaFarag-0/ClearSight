@@ -32,7 +32,7 @@ namespace ClearSight.Infrastructure.Implementations.Services
 
         public async Task<List<DoctorActivateProfile>> GetDoctorsActivateProfilesAsync(int pageNumber = 1, int pageSize = 5)
         {
-            var doctors = await _unitOfWork.Doctors.GetAllWithIncludesAsync(x => x.Status == VerificationStatus.Pending, (1 - pageNumber) * pageSize, pageSize, x => x.User.PhoneNumbers);
+            var doctors = await _unitOfWork.Doctors.GetAllWithIncludesAsync(x => x.Status == VerificationStatus.Pending, (pageNumber - 1) * pageSize, pageSize, x => x.User.PhoneNumbers);
             var doctorsDtos = _mapper.Map<List<DoctorActivateProfile>>(doctors);
             return doctorsDtos;
         }

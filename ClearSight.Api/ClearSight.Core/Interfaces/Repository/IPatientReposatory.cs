@@ -1,4 +1,4 @@
-﻿using ClearSight.Core.Mosels;
+﻿using ClearSight.Core.Models;
 
 namespace ClearSight.Core.Interfaces.Repository
 {

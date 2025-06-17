@@ -1,6 +1,6 @@
 ﻿using ClearSight.Core.Dtos.AuthenticationDtos;
 using ClearSight.Core.Helpers;
-using ClearSight.Core.Mosels;
+using ClearSight.Core.Models;
 using ClearSight.Infrastructure.Context;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -195,29 +195,6 @@ namespace ClearSight.Infrastructure.Implementations.Services
             return jwtSecurityToken;
         }
 
-        public string GenerateToken(string email)
-        {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Key));
-
-            var claims = new[]
-            {
-            new Claim(JwtRegisteredClaimNames.Sub, email),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.Email, email)
-            };
-
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var token = new JwtSecurityToken(
-                issuer: _jwt.Issuer,
-                audience: _jwt.Audience,
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(_jwt.DurationInMinutes),
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-
-        }
 
         public async Task<AuthenticationModel> RefreshTokenAsync(string token)
         {

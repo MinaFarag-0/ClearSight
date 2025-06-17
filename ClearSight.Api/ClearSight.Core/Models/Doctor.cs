@@ -1,5 +1,4 @@
 ﻿using ClearSight.Core.Enums;
-using ClearSight.Core.Mosels;
 
 namespace ClearSight.Core.Models
 {

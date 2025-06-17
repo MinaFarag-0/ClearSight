@@ -5,7 +5,6 @@ using ClearSight.Core.Helpers;
 using ClearSight.Core.Interfaces;
 using ClearSight.Core.Interfaces.Services;
 using ClearSight.Core.Models;
-using ClearSight.Core.Mosels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using System.Text.RegularExpressions;

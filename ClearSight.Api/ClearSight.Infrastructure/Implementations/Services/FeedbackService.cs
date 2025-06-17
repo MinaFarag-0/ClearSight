@@ -2,7 +2,6 @@
 using ClearSight.Core.Interfaces;
 using ClearSight.Core.Interfaces.Services;
 using ClearSight.Core.Models;
-using ClearSight.Core.Mosels;
 using Microsoft.AspNetCore.Identity;
 
 namespace ClearSight.Infrastructure.Implementations.Services

@@ -1,10 +1,10 @@
-﻿using ClearSight.Core.Models;
-using ClearSight.Core.Mosels;
+﻿using ClearSight.Core.Enums;
+using ClearSight.Core.Models;
 using ClearSight.Infrastructure.Context;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ClearSight.Infrastructure.Implementations
+namespace ClearSight.Infrastructure.DbSeeding
 {
     public static class DbSeeder
     {
@@ -59,6 +59,18 @@ namespace ClearSight.Infrastructure.Implementations
             }
 
             await context.SaveChangesAsync();
+        }
+
+        public static async Task SeedRolesAsync(IServiceProvider serviceProvider)
+        {
+            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            foreach (var roleName in Enum.GetNames<Roles>())
+            {
+                if (!await roleManager.RoleExistsAsync(roleName))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(roleName));
+                }
+            }
         }
     }
 

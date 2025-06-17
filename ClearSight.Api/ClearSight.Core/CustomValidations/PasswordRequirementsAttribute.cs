@@ -5,16 +5,43 @@ namespace ClearSight.Core.CustomValidations
 {
     public class PasswordRequirementsAttribute : ValidationAttribute
     {
-        private const string Pattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{6,}$";
+        public int MinimumLength { get; set; } = 6;
+        public bool RequireUppercase { get; set; } = true;
+        public bool RequireLowercase { get; set; } = true;
+        public bool RequireDigit { get; set; } = true;
+        public bool RequireSpecialCharacter { get; set; } = true;
 
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
-            if (value is string password && Regex.IsMatch(password, Pattern))
+            var password = value as string;
+
+            if (string.IsNullOrEmpty(password))
             {
-                return ValidationResult.Success;
+                return new ValidationResult("Password is required.");
             }
 
-            return new ValidationResult("Password Must Be 1 UpperCase, 1 LowerCase, 1 Number, 1 Special Character And Length More Than Or Equals 6");
+            var errors = new List<string>();
+
+            if (password.Length < MinimumLength)
+                errors.Add($"at least {MinimumLength} characters");
+
+            if (RequireUppercase && !Regex.IsMatch(password, "[A-Z]"))
+                errors.Add("one uppercase letter");
+
+            if (RequireLowercase && !Regex.IsMatch(password, "[a-z]"))
+                errors.Add("one lowercase letter");
+
+            if (RequireDigit && !Regex.IsMatch(password, @"\d"))
+                errors.Add("one number");
+
+            if (RequireSpecialCharacter && !Regex.IsMatch(password, @"[^a-zA-Z\d]"))
+                errors.Add("one special character");
+
+            if (errors.Count == 0)
+                return ValidationResult.Success;
+
+            var errorMessage = "Password must contain " + string.Join(", ", errors) + ".";
+            return new ValidationResult(errorMessage);
         }
     }
 }

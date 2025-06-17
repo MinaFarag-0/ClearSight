@@ -2,7 +2,6 @@
 using ClearSight.Core.Dtos.BusnessDtos;
 using ClearSight.Core.Interfaces.Services;
 using ClearSight.Core.Models;
-using ClearSight.Core.Mosels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace ClearSight.Core.Mosels
+namespace ClearSight.Core.Models
 {
     [Owned]
     public class RefreshToken

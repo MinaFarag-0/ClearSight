@@ -1,5 +1,4 @@
 ﻿using ClearSight.Core.Models;
-using ClearSight.Core.Mosels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +22,7 @@ namespace ClearSight.Infrastructure.Context
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

@@ -2,7 +2,7 @@
 using ClearSight.Core.Dtos.BusnessDtos;
 using ClearSight.Core.Enums;
 using ClearSight.Core.Interfaces.Services;
-using ClearSight.Core.Mosels;
+using ClearSight.Core.Models;
 using ClearSight.Infrastructure.Implementations.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,16 +21,14 @@ namespace ClearSight.Api.Controllers
         private readonly CloudinaryService _cloudinaryService;
         private readonly MLModelService _mlModelService;
         private readonly IPatientService _patientService;
-        private readonly IConfiguration _configuration;
         private readonly ILogger<PatientsController> _logger;
 
 
-        public PatientsController(CloudinaryService cloudinaryService, MLModelService mlModelService, IPatientService patientService, IConfiguration configuration, ILogger<PatientsController> logger)
+        public PatientsController(CloudinaryService cloudinaryService, MLModelService mlModelService, IPatientService patientService, ILogger<PatientsController> logger)
         {
             _cloudinaryService = cloudinaryService;
             _mlModelService = mlModelService;
             _patientService = patientService;
-            _configuration = configuration;
             _logger = logger;
         }
 

@@ -4,7 +4,6 @@ using ClearSight.Core.Enums;
 using ClearSight.Core.Interfaces;
 using ClearSight.Core.Interfaces.Services;
 using ClearSight.Core.Models;
-using ClearSight.Core.Mosels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Linq.Expressions;
